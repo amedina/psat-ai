@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Topics Demo</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 20px; }
+        .container { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .section { border: 1px solid #ccc; padding: 10px; }
+        #topicsCircle, #clock { width: 100%; height: 300px; }
+        #thisWeekTopics { width: 100%; height: 300px; overflow-y: auto; }
+        #historyTable { width: 100%; height: 250px; overflow-y: auto; grid-column: span 3; }
+        #configTable { grid-column: span 3; }
+        table { border-collapse: collapse; width: 100%; }
+        td, th { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        .adTech { display: inline-block; margin-right: 3px; font-size: 12px; padding: 2px 4px; border-radius: 3px; color: white; }
+        .highlighted { background-color: yellow; }
+        @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .blinking { animation: blink 1s linear infinite; }
+        .week-container { display: inline-block; vertical-align: top; margin-right: 20px; }
+.adTech {
+    transition: all 0.3s ease;
+}
+.adTech.blinking {
+    animation: blink 1s linear infinite;
+}
+@keyframes blink {
+    0% { opacity: 1; }
+    50% { opacity: 0.5; }
+    100% { opacity: 1; }
+}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="section">
+            <h3>Topics Circle</h3>
+            <svg id="topicsCircle"></svg>
+        </div>
+        <div class="section">
+            <h3>This Week's Topics</h3>
+            <div id="thisWeekTopics"></div>
+        </div>
+        <div class="section">
+            <h3>Clock (7 Days)</h3>
+            <svg id="clock"></svg>
+            <button id="pauseButton">Pause/Resume</button>
+        </div>
+        <div class="section" id="historyTable">
+            <h3>History Table</h3>
+        </div>
+        <div class="section" id="configTable">
+            <h3>Config Table</h3>
+        </div>
+    </div>
+
+    <script>
+        const topics = [
+            {domain: 'cats.com', name: 'Cats'},
+            {domain: 'dogs.com', name: 'Dogs'},
+            {domain: 'fish.com', name: 'Fish'},
+            {domain: 'travel.com', name: 'Travel'},
+            {domain: 'sports.com', name: 'Sports'},
+            {domain: 'news.com', name: 'News'},
+            {domain: 'tech.com', name: 'Technology'},
+            {domain: 'food.com', name: 'Cooking'},
+            {domain: 'music.com', name: 'Music'},
+            {domain: 'art.com', name: 'Art'}
+        ];
+
+        const adTechs = ['AdSense', 'OpenX', 'AppNexus', 'Rubicon', 'Criteo', 'Taboola', 'Outbrain', 'MediaMath', 'PubMatic', 'Index Exchange'];
+        const adTechColors = d3.schemeCategory10;
+        let thisWeekTopics = [];
+        let historyTopics = [];
+        let configMatrix = Array(10).fill().map(() => Array(10).fill(false));
+        let currentWeek = 1;
+        let isPaused = false;
+
+        // Pre-populate config with random Ad techs per domain
+        topics.forEach((_, i) => {
+            const numAdTechs = Math.floor(Math.random() * 5) + 1; // 1 to 5 ad techs
+            const selectedAdTechs = d3.shuffle([...adTechs]).slice(0, numAdTechs);
+            selectedAdTechs.forEach(adTech => {
+                configMatrix[i][adTechs.indexOf(adTech)] = true;
+            });
+        });
+
+        // Topics Circle
+        const svgCircle = d3.select('#topicsCircle');
+        const width = svgCircle.node().getBoundingClientRect().width;
+        const height = 300;
+        const radius = Math.min(width, height) / 2 - 20;
+        
+        svgCircle.attr('viewBox', `0 0 ${width} ${height}`);
+
+        const angleStep = (Math.PI * 2) / topics.length;
+        const topicPoints = topics.map((d, i) => ({
+            x: width/2 + radius * Math.cos(i * angleStep - Math.PI/2),
+            y: height/2 + radius * Math.sin(i * angleStep - Math.PI/2),
+            ...d
+        }));
+
+        const circleGroup = svgCircle.append('g');
+
+        circleGroup.selectAll('circle.domain')
+            .data(topicPoints)
+            .join('circle')
+            .attr('class', 'domain')
+            .attr('cx', d => d.x)
+            .attr('cy', d => d.y)
+            .attr('r', 11)
+            .attr('fill', '#ddd')
+            .on('click', (event, d) => {
+                moveUserTo(d);
+            });
+
+        circleGroup.selectAll('text.domain')
+            .data(topicPoints)
+            .join('text')
+            .attr('class', 'domain')
+            .attr('x', d => d.x)
+            .attr('y', d => d.y + 20)
+            .text(d => d.domain)
+            .attr('text-anchor', 'middle')
+            .attr('font-size', '10px')
+            .on('click', (event, d) => {
+                moveUserTo(d);
+            });
+
+        const user = circleGroup.append('circle')
+            .attr('class', 'user')
+            .attr('r', 8)
+            .attr('fill', 'red');
+
+        function moveUserTo(topic) {
+            user.transition()
+                .duration(500)
+                .ease(d3.easeQuadInOut)
+                .attr('cx', topic.x)
+                .attr('cy', topic.y)
+                .on('end', () => {
+                    updateThisWeekTopics(topic);
+                    updateAdTechOrbits(topic);
+                    highlightHistoryTopics(topic);
+                });
+        }
+
+        function moveUser() {
+            if (!isPaused) {
+                const randomPoint = topicPoints[Math.floor(Math.random() * topicPoints.length)];
+                moveUserTo(randomPoint);
+            }
+        }
+
+        // This Week's Topics
+        function updateThisWeekTopics(topic) {
+            const existingTopic = thisWeekTopics.find(t => t.name === topic.name);
+            if (existingTopic) {
+                existingTopic.visits++;
+            } else {
+                const topicIndex = topics.findIndex(t => t.name === topic.name);
+                const observedAdTechs = adTechs.filter((_, i) => configMatrix[topicIndex][i]);
+                thisWeekTopics.push({ ...topic, visits: 1, adTechs: observedAdTechs });
+            }
+            thisWeekTopics.sort((a, b) => b.visits - a.visits);
+            renderThisWeekTopics();
+        }
+
+        function renderThisWeekTopics() {
+            const table = d3.select('#thisWeekTopics')
+                .selectAll('table')
+                .data([null])
+                .join('table');
+
+            const rows = table.selectAll('tr')
+                .data(thisWeekTopics)
+                .join('tr');
+
+            rows.selectAll('td')
+                .data(d => [d.name, d.visits, d.adTechs])
+                .join('td')
+                .html((d, i) => i === 2 ? d.map(at => `<span class="adTech" style="background-color:${adTechColors[adTechs.indexOf(at)]}">${at}</span>`).join(' ') : d);
+        }
+
+        // Clock
+        const svgClock = d3.select('#clock');
+        svgClock.attr('viewBox', `0 0 ${width} ${height}`);
+
+        const clockGroup = svgClock.append('g')
+            .attr('transform', `translate(${width/2},${height/2})`);
+
+        clockGroup.append('circle')
+            .attr('r', radius)
+            .attr('fill', 'none')
+            .attr('stroke', 'black');
+
+        const hourHand = clockGroup.append('line')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 3);
+
+        const minuteHand = clockGroup.append('line')
+            .attr('stroke', 'black')
+            .attr('stroke-width', 2);
+
+        const timeText = clockGroup.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', 20)
+            .attr('font-size', '14px');
+
+        clockGroup.append('text')
+            .attr('text-anchor', 'middle')
+            .attr('dy', -20)
+            .attr('font-size', '14px')
+            .text('7 Days');
+
+        const totalTime = 30 * 1000; // 30 seconds
+        let startTime;
+        let pausedTime = 0;
+
+        function updateClock(timestamp) {
+            if (isPaused) {
+                pausedTime = timestamp - startTime;
+                requestAnimationFrame(updateClock);
+                return;
+            }
+
+            if (!startTime) startTime = timestamp - pausedTime;
+            const elapsed = timestamp - startTime;
+            const remainingTime = Math.max(0, totalTime - elapsed);
+
+            const hour = (elapsed / totalTime) * 24 * 7; // 7 days
+            const minute = (hour % 1) * 60;
+
+            hourHand
+                .attr('x2', Math.sin(hour * 2 * Math.PI / (24 * 7)) * radius * 0.5)
+                .attr('y2', -Math.cos(hour * 2 * Math.PI / (24 * 7)) * radius * 0.5);
+
+            minuteHand
+                .attr('x2', Math.sin(minute * 2 * Math.PI / 60) * radius * 0.8)
+                .attr('y2', -Math.cos(minute * 2 * Math.PI / 60) * radius * 0.8);
+
+            const days = Math.floor(remainingTime / (totalTime / 7));
+            const hours = Math.floor((remainingTime % (totalTime / 7)) / (totalTime / 7 / 24));
+            timeText.text(`${days}d ${hours}h`);
+
+            if (remainingTime <= 0) {
+                updateHistoryTable();
+                thisWeekTopics = [];
+                renderThisWeekTopics();
+                startTime = null;
+                pausedTime = 0;
+                currentWeek++;
+            }
+
+            requestAnimationFrame(updateClock);
+        }
+
+        requestAnimationFrame(updateClock);
+
+        // Pause Button
+        d3.select('#pauseButton').on('click', () => {
+            isPaused = !isPaused;
+            d3.select('#pauseButton').text(isPaused ? 'Resume' : 'Pause');
+        });
+// History Table
+function updateHistoryTable() {
+    historyTopics.unshift({week: currentWeek, topics: thisWeekTopics.slice(0, 5)});
+    if (historyTopics.length > 3) historyTopics.pop();
+    renderHistoryTable();
+}
+
+function simpleHash(topic_id, week_id, domain) {
+    const inputString = topic_id.toString() + week_id.toString() + domain;
+    let hash = 0;
+    for (let i = 0; i < inputString.length; i++) {
+        const char = inputString.charCodeAt(i);
+        hash = (hash << 5) - hash + char;
+        hash |= 0;
+    }
+    return Math.abs(hash);
+}
+
+function renderHistoryTable() {
+    const container = d3.select('#historyTable');
+    container.selectAll('*').remove();
+
+    const weekContainers = container.selectAll('.week-container')
+        .data(historyTopics)
+        .join('div')
+        .attr('class', 'week-container');
+
+    weekContainers.each(function(d) {
+        const weekContainer = d3.select(this);
+        weekContainer.append('h4').text(`Week ${d.week}`);
+
+        const table = weekContainer.append('table');
+        const rows = table.selectAll('tr')
+            .data(d.topics)
+            .join('tr');
+
+        rows.selectAll('td')
+            .data(t => [t.name, t.adTechs])
+            .join('td')
+            .html((t, i) => i === 1 ? t.map(at => `<span class="adTech" data-adtech="${at}" style="background-color:${adTechColors[adTechs.indexOf(at)]}">${at}</span>`).join(' ') : t);
+    });
+}
+
+function highlightHistoryTopics(currentTopic) {
+    const topicId = topics.findIndex(t => t.name === currentTopic.name);
+    const currentDomain = currentTopic.domain;
+    
+    d3.selectAll('#historyTable .week-container').each(function(d) {
+        const weekContainer = d3.select(this);
+        const weekId = d.week;
+        const hash = simpleHash(topicId, weekId, currentDomain);
+        const highlightedTopicIndex = hash % 5;
+        
+        weekContainer.selectAll('tr')
+            .classed('highlighted', false)
+            .each(function(t, i) {
+                const row = d3.select(this);
+                if (i === highlightedTopicIndex) {
+                    row.classed('highlighted', true);
+                    row.selectAll('.adTech')
+                        .each(function() {
+                            const adTech = d3.select(this);
+                            const adTechName = adTech.attr('data-adtech');
+                            const adTechIndex = adTechs.indexOf(adTechName);
+                            const isAssociated = configMatrix[topicId][adTechIndex];
+                            
+                            adTech
+                                .classed('blinking', isAssociated)
+                                .style('border', isAssociated ? '2px solid white' : 'none')
+                                .style('box-shadow', isAssociated ? '0 0 10px #fff' : 'none');
+                        });
+                } else {
+                    row.selectAll('.adTech')
+                        .classed('blinking', false)
+                        .style('border', 'none')
+                        .style('box-shadow', 'none');
+                }
+            });
+    });
+}
+
+// Config Table
+        function renderConfigTable() {
+            const table = d3.select('#configTable')
+                .selectAll('table')
+                .data([null])
+                .join('table');
+
+            const headerRow = table.selectAll('tr.header')
+                .data([null])
+                .join('tr')
+                .attr('class', 'header');
+
+            headerRow.selectAll('th')
+                .data(['Topic'].concat(adTechs))
+                .join('th')
+                .text(d => d);
+
+            const rows = table.selectAll('tr.data')
+                .data(topics)
+                .join('tr')
+                .attr('class', 'data');
+
+            rows.selectAll('td')
+                .data((d, i) => [d.name].concat(adTechs.map((at, j) => ({ topic: d, adTech: at, checked: configMatrix[i][j] }))))
+                .join('td')
+                .html((d, i) => i === 0 ? d : `<input type="checkbox" ${d.checked ? 'checked' : ''}>`)
+                .style('background-color', (d, i) => i > 0 ? adTechColors[i - 1] : null)
+                .on('change', function(event, d) {
+                    if (typeof d === 'object') {
+                        const topicIndex = topics.findIndex(t => t.name === d.topic.name);
+                        const adTechIndex = adTechs.indexOf(d.adTech);
+                        configMatrix[topicIndex][adTechIndex] = event.target.checked;
+                        updateAdTechOrbits(d.topic);
+                    }
+                });
+        }
+
+        // Ad Tech Orbits
+        function updateAdTechOrbits(topic) {
+            const topicIndex = topics.findIndex(t => t.name === topic.name);
+            const topicPoint = topicPoints[topicIndex];
+            const activeAdTechs = adTechs.filter((_, i) => configMatrix[topicIndex][i]);
+
+            const orbitGroup = circleGroup.selectAll(`g.orbit-${topicIndex}`)
+                .data([null])
+                .join('g')
+                .attr('class', `orbit-${topicIndex}`);
+
+            const orbits = orbitGroup.selectAll('circle.adTech')
+                .data(activeAdTechs, d => d);
+
+            orbits.enter()
+                .append('circle')
+                .attr('class', 'adTech')
+                .attr('r', 3)
+                .merge(orbits)
+                .attr('fill', d => adTechColors[adTechs.indexOf(d)])
+                .attr('cx', (d, i) => {
+                    const angle = i * (2 * Math.PI / activeAdTechs.length);
+                    return 15 * Math.cos(angle);
+                })
+                .attr('cy', (d, i) => {
+                    const angle = i * (2 * Math.PI / activeAdTechs.length);
+                    return 15 * Math.sin(angle);
+                });
+
+            orbits.exit().remove();
+
+            orbitGroup.attr('transform', `translate(${topicPoint.x}, ${topicPoint.y})`);
+        }
+
+        // Initialize
+        renderConfigTable();
+        topics.forEach(updateAdTechOrbits);
+        setInterval(moveUser, 2000);
+    </script>
+</body>
+</html>
