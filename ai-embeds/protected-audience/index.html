@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Refined Protected Audience API Visualization</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        body { margin: 0; padding: 0; overflow: hidden; }
+        #infoPanel {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(255, 255, 255, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: Arial, sans-serif;
+            font-size: 14px;
+            max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+<div id="infoPanel"></div>
+<script>
+let user;
+let interestGroups = [];
+let advertisers = [];
+let publishers = [];
+let dsps = [];
+let auctionCircle;
+let winningAd;
+let state = 'browsing'; // States: browsing, auction, result
+let infoPanel;
+let flows = [];
+let restartTimer = 0;
+
+function setup() {
+    createCanvas(windowWidth, windowHeight);
+    user = new User(width / 2, height / 2);
+    
+    // Create advertisers
+    advertisers.push(new Advertiser('TechGadgets', color(255, 0, 0), 100, 100));
+    advertisers.push(new Advertiser('FashionTrends', color(0, 255, 0), width - 100, 100));
+    advertisers.push(new Advertiser('TravelDreams', color(0, 0, 255), 100, height - 100));
+    
+    // Create publishers
+    publishers.push(new Publisher('NewsDaily', color(255, 255, 0), width - 100, height - 100));
+    publishers.push(new Publisher('SocialConnect', color(255, 0, 255), width / 2, 50));
+    
+    // Create DSPs
+    dsps.push(new DSP('DSP1', 200, height / 2));
+    dsps.push(new DSP('DSP2', width - 200, height / 2));
+    
+    infoPanel = select('#infoPanel');
+    updateInfoPanel("Move the cursor (user) over advertisers to generate interest groups, then visit a publisher to trigger an auction.");
+}
+
+function draw() {
+    background(240);
+    
+    // Draw entities
+    for (let adv of advertisers) adv.display();
+    for (let pub of publishers) pub.display();
+    for (let dsp of dsps) dsp.display();
+    
+    // Update and display interest groups
+    for (let ig of interestGroups) {
+        ig.update();
+        ig.display();
+    }
+    
+    // Update and display user
+    user.update();
+    user.display();
+    
+    // Handle different states
+    if (state === 'auction') {
+        auctionCircle.update();
+        auctionCircle.display();
+        if (auctionCircle.isFinished()) {
+            state = 'result';
+            let highestBid = Math.max(...interestGroups.map(ig => ig.bidValue));
+            let winner = interestGroups.find(ig => ig.bidValue === highestBid);
+            winningAd = new WinningAd(user.pos.x, user.pos.y, winner.c);
+            updateInfoPanel(`Auction completed. Winning bid: $${highestBid}`);
+            restartTimer = frameCount + 600; // 10 seconds at 60 fps
+        }
+    } else if (state === 'result') {
+        winningAd.display();
+        if (frameCount >= restartTimer) {
+            restartSimulation();
+        }
+    }
+    
+    // Display flows
+    for (let i = flows.length - 1; i >= 0; i--) {
+        flows[i].update();
+        flows[i].display();
+        if (flows[i].isDone()) {
+            flows.splice(i, 1);
+        }
+    }
+    
+    // Check for advertiser visits
+    for (let adv of advertisers) {
+        if (adv.contains(user.pos) && random() < 0.02 && state === 'browsing') {
+            let dsp = random(dsps);
+            interestGroups.push(new InterestGroup(dsp.pos.x, dsp.pos.y, adv.c, dsp));
+            updateInfoPanel(`Interest group generated from ${adv.name} via ${dsp.name}`);
+        }
+    }
+    
+    // Check for publisher visits
+    for (let pub of publishers) {
+        if (pub.contains(user.pos) && state === 'browsing') {
+            state = 'auction';
+            auctionCircle = new AuctionCircle(user.pos.x, user.pos.y);
+            updateInfoPanel(`Auction triggered on ${pub.name}`);
+            for (let ig of interestGroups) {
+                flows.push(new Flow(ig.pos, ig.dsp.pos, "Bid request"));
+            }
+            setTimeout(() => {
+                for (let ig of interestGroups) {
+                    ig.generateBid();
+                    flows.push(new Flow(ig.dsp.pos, ig.pos, `Bid: $${ig.bidValue}`));
+                }
+            }, 1000);
+        }
+    }
+}
+
+class User {
+    constructor(x, y) {
+        this.pos = createVector(x, y);
+        this.size = 20;
+    }
+    
+    update() {
+        if (state === 'auction' || state === 'result') {
+            let target = createVector(mouseX, mouseY);
+            let d = dist(target.x, target.y, auctionCircle.pos.x, auctionCircle.pos.y);
+            if (d > auctionCircle.radius - this.size/2) {
+                target = p5.Vector.sub(target, auctionCircle.pos).setMag(auctionCircle.radius - this.size/2).add(auctionCircle.pos);
+            }
+            this.pos.lerp(target, 0.1);
+        } else {
+            let target = createVector(mouseX, mouseY);
+            this.pos.lerp(target, 0.1);
+        }
+    }
+    
+    display() {
+        fill(100, 100, 255);
+        noStroke();
+        ellipse(this.pos.x, this.pos.y, this.size);
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(10);
+        text("User", this.pos.x, this.pos.y + this.size);
+    }
+}
+
+class Advertiser {
+    constructor(name, c, x, y) {
+        this.name = name;
+        this.c = c;
+        this.pos = createVector(x, y);
+        this.size = 60;
+    }
+    
+    display() {
+        fill(this.c);
+        noStroke();
+        rect(this.pos.x - this.size/2, this.pos.y - this.size/2, this.size, this.size);
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text(this.name, this.pos.x, this.pos.y);
+    }
+    
+    contains(pos) {
+        return abs(pos.x - this.pos.x) < this.size/2 && abs(pos.y - this.pos.y) < this.size/2;
+    }
+}
+
+class Publisher {
+    constructor(name, c, x, y) {
+        this.name = name;
+        this.c = c;
+        this.pos = createVector(x, y);
+        this.size = 60;
+    }
+    
+    display() {
+        fill(this.c);
+        noStroke();
+        ellipse(this.pos.x, this.pos.y, this.size);
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(12);
+        text(this.name, this.pos.x, this.pos.y);
+    }
+    
+    contains(pos) {
+        return dist(pos.x, pos.y, this.pos.x, this.pos.y) < this.size/2;
+    }
+}
+
+class DSP {
+    constructor(name, x, y) {
+        this.name = name;
+        this.pos = createVector(x, y);
+        this.size = 50;
+    }
+    
+    display() {
+        fill(150);
+        noStroke();
+        rect(this.pos.x - this.size/2, this.pos.y - this.size/2, this.size, this.size, 10);
+        fill(0);
+        textAlign(CENTER, CENTER);
+        textSize(10);
+        text(this.name, this.pos.x, this.pos.y);
+    }
+}
+
+class InterestGroup {
+    constructor(x, y, c, dsp) {
+        this.pos = createVector(x, y);
+        this.c = c;
+        this.size = 10;
+        this.offset = p5.Vector.random2D().mult(random(50, 150));
+        this.bidValue = 0;
+        this.dsp = dsp;
+    }
+    
+    update() {
+        let target = p5.Vector.add(user.pos, this.offset);
+        this.pos.lerp(target, 0.05);
+    }
+    
+    display() {
+        fill(this.c);
+        noStroke();
+        ellipse(this.pos.x, this.pos.y, this.size);
+        if (this.bidValue > 0) {
+            fill(0);
+            textAlign(CENTER, CENTER);
+            textSize(8);
+            text(`$${this.bidValue}`, this.pos.x, this.pos.y + this.size);
+        }
+    }
+    
+    generateBid() {
+        this.bidValue = floor(random(1, 101));
+    }
+}
+
+class AuctionCircle {
+    constructor(x, y) {
+        this.pos = createVector(x, y);
+        this.radius = 0;
+        this.maxRadius = 300;
+        this.duration = 180; // 3 seconds at 60 fps
+        this.frame = 0;
+    }
+    
+    update() {
+        this.frame++;
+        this.radius = map(this.frame, 0, this.duration, 0, this.maxRadius);
+        
+        // Agitate interest groups
+        for (let ig of interestGroups) {
+            let d = dist(ig.pos.x, ig.pos.y, this.pos.x, this.pos.y);
+            if (d < this.radius) {
+                ig.pos.add(p5.Vector.random2D().mult(3));
+            }
+        }
+    }
+    
+    display() {
+        noFill();
+        stroke(200, 100, 100);
+        strokeWeight(2);
+        ellipse(this.pos.x, this.pos.y, this.radius * 2);
+    }
+    
+    isFinished() {
+        return this.frame >= this.duration;
+    }
+}
+
+class WinningAd {
+    constructor(x, y, c) {
+        this.pos = createVector(x, y);
+        this.size = 40;
+        this.c = c;
+    }
+    
+    display() {
+        fill(this.c);
+        noStroke();
+        star(this.pos.x, this.pos.y, this.size, this.size * 2, 5);
+    }
+}
+
+class Flow {
+    constructor(start, end, text) {
+        this.start = start.copy();
+        this.end = end.copy();
+        this.text = text;
+        this.progress = 0;
+        this.speed = 0.02;
+    }
+    
+    update() {
+        this.progress = min(this.progress + this.speed, 1);
+    }
+    
+    display() {
+        let current = p5.Vector.lerp(this.start, this.end, this.progress);
+        stroke(0, 150);
+        strokeWeight(2);
+        line(this.start.x, this.start.y, current.x, current.y);
+        noStroke();
+        fill(0);
+        ellipse(current.x, current.y, 5);
+        
+        if (this.progress === 1) {
+            textAlign(CENTER, CENTER);
+            textSize(10);
+            text(this.text, (this.start.x + this.end.x) / 2, (this.start.y + this.end.y) / 2);
+        }
+    }
+    
+    isDone() {
+        return this.progress === 1;
+    }
+}
+
+function star(x, y, radius1, radius2, npoints) {
+    let angle = TWO_PI / npoints;
+    let halfAngle = angle / 2.0;
+    beginShape();
+    for (let a = 0; a < TWO_PI; a += angle) {
+        let sx = x + cos(a) * radius2;
+        let sy = y + sin(a) * radius2;
+        vertex(sx, sy);
+        sx = x + cos(a + halfAngle) * radius1;
+        sy = y + sin(a + halfAngle) * radius1;
+        vertex(sx, sy);
+    }
+    endShape(CLOSE);
+}
+
+function restartSimulation() {
+    state = 'browsing';
+    interestGroups = [];
+    auctionCircle = null;
+    winningAd = null;
+    flows = [];
+    updateInfoPanel("Simulation restarted. Move the cursor (user) over advertisers to generate interest groups, then visit a publisher to trigger an auction.");
+}
+
+function windowResized() {
+    resizeCanvas(windowWidth, windowHeight);
+}
+
+function updateInfoPanel(text) {
+    infoPanel.html(text);
+}
+</script>
+</body>
+</html>
+
