@@ -15,11 +15,15 @@
 <body>
     <div id="timeline"></div>
     <script>
+        const drawingSpeed = 12;
+
         let nodes = [
-            { type: 'publisher', website: 'example1.com', datetime: '2023-10-01 10:00' },
-            { type: 'advertiser', website: 'example2.com', datetime: '2023-10-01 11:00' },
-            { type: 'publisher', website: 'example3.com', datetime: '2023-10-01 12:00' },
-            { type: 'advertiser', website: 'example4.com', datetime: '2023-10-01 13:00' }
+            { type: 'advertiser', website: 'adv1.com', datetime: '2023-10-01 10:00' },
+            { type: 'advertiser', website: 'adv2.com', datetime: '2023-10-01 11:00' },
+            { type: 'publisher', website: 'pub1.com', datetime: '2023-10-01 12:00' },
+            { type: 'advertiser', website: 'adv3.com', datetime: '2023-10-01 13:00' },
+            { type: 'advertiser', website: 'adv5.com', datetime: '2023-10-01 13:00' },
+            { type: 'publisher', website: 'pub2.com', datetime: '2023-10-01 12:00' },
         ];
 
         // Variables to control positions of text and circles
@@ -58,14 +62,14 @@
         }
 
         function draw() {
-            background(245);
+            background(255);
             stroke(0);
 
             // Animate vertical line drawing
             const lineX = circleX;
             if (lineYStart < height) {
                 line(lineX, 0, lineX, lineYStart);
-                lineYStart += 5;  // Speed of line drawing
+                lineYStart += drawingSpeed;  // Speed of line drawing
             } else {
                 line(lineX, 0, lineX, height);  // Ensure line completes
             }
@@ -77,7 +81,7 @@
 
                 // Move circles into position
                 if (circles[i].y < targetY) {
-                    circles[i].y += 5;  // Speed of circle movement
+                    circles[i].y += drawingSpeed;  // Speed of circle movement
                 }
 
                 // Check if the mouse is over the circle and apply zoom effect
@@ -106,8 +110,8 @@
                 // Animate horizontal expansion when a publisher is clicked
                 if (horizontalAnimActive && i === targetPublisherIndex) {
                     // Draw horizontal line
-                    if (circles[i].horizontalX < width - 100) {
-                        circles[i].horizontalX += 5;  // Speed of horizontal expansion
+                    if (circles[i].horizontalX < width - 300) {
+                        circles[i].horizontalX += drawingSpeed;  // Speed of horizontal expansion
                     }
                     line(circles[i].x, circles[i].y, circles[i].horizontalX, circles[i].y);
 
@@ -118,7 +122,7 @@
                     // Display additional info or text at the end of the horizontal line (optional)
                     fill(0);
                     textAlign(LEFT);
-                    text("Expanded Data", circles[i].horizontalX + 50, circles[i].y + 5);
+                    text("Publisher Auction Flow", circles[i].horizontalX + 50, circles[i].y + 5);
                 }
             }
         }
