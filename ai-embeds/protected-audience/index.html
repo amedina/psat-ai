@@ -36,9 +36,9 @@ let infoPanel;
 let flows = [];
 let restartTimer = 0;
 const convasHeight = 400;
-const webSiteNodeXMargin = 100;
+const webSiteNodeXMargin = 140;
 const webSiteNodeYMargin = 200;
-
+const nodeSize = 90
 
 function setup() {
     createCanvas(windowWidth, convasHeight);
@@ -46,40 +46,40 @@ function setup() {
 
     const advertiserNodes = [
         {
-            name: 'TechGadgets',
+            name: 'adv-1.com',
             color: 'red',
-            x: webSiteNodeXMargin,
+            x: webSiteNodeXMargin * 1,
             y: webSiteNodeYMargin
         },
         {
-            name: 'FashionTrends',
+            name: 'adv-2.com',
             color: 'green',
             x: webSiteNodeXMargin * 2,
             y: webSiteNodeYMargin
         },
         {
-            name: 'TravelDreams',
+            name: 'adv-3.com',
             color: 'blue',
-            x: webSiteNodeXMargin * 3,
+            x: webSiteNodeXMargin * 4,
             y: webSiteNodeYMargin
         },
         {
-            name: 'BBC.com',
+            name: 'adv-4.com',
             color: 'yellow',
-            x: webSiteNodeXMargin * 4,
+            x: webSiteNodeXMargin * 5,
             y: webSiteNodeYMargin
         }
     ];
 
     const publisherNodes = [
         {
-            name: 'NewsDaily',
-            color: 'yellow',
-            x: webSiteNodeXMargin * 5,
+            name: 'pub-1.com',
+            color: 'cyan',
+            x: webSiteNodeXMargin * 3,
             y: webSiteNodeYMargin
         },
         {
-            name: 'SocialConnect',
+            name: 'pub-2.com',
             color: 'magenta',
             x: webSiteNodeXMargin * 6,
             y: webSiteNodeYMargin
@@ -224,25 +224,26 @@ class User {
 }
 
 class Advertiser {
-    constructor(name, c, x, y) {
+    constructor(name, c, x, y, cornerRadius = 10) {
         this.name = name;
         this.c = c;
         this.pos = createVector(x, y);
-        this.size = 60;
+        this.size = 90;
+        this.cornerRadius = cornerRadius; // Add corner radius property
     }
     
     display() {
         fill(this.c);
         noStroke();
-        rect(this.pos.x - this.size/2, this.pos.y - this.size/2, this.size, this.size);
+        rect(this.pos.x - this.size / 2, this.pos.y - this.size / 2, this.size, this.size / 2, this.cornerRadius);
         fill(0);
         textAlign(CENTER, CENTER);
         textSize(12);
-        text(this.name, this.pos.x, this.pos.y);
+        text(this.name, this.pos.x, this.pos.y - 22);
     }
     
     contains(pos) {
-        return abs(pos.x - this.pos.x) < this.size/2 && abs(pos.y - this.pos.y) < this.size/2;
+        return abs(pos.x - this.pos.x) < this.size / 2 && abs(pos.y - this.pos.y) < this.size / 2;
     }
 }
 
@@ -257,11 +258,11 @@ class Publisher {
     display() {
         fill(this.c);
         noStroke();
-        ellipse(this.pos.x, this.pos.y, this.size);
+        ellipse(this.pos.x, this.pos.y - 20, 90, 60);
         fill(0);
         textAlign(CENTER, CENTER);
         textSize(12);
-        text(this.name, this.pos.x, this.pos.y);
+        text(this.name, this.pos.x, this.pos.y - 20);
     }
     
     contains(pos) {
