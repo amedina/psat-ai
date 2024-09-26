@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Vertical Timeline with Animation and Hover Effect</title>
+    <title>Vertical Timeline with Horizontal Animation</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
         #timeline {
@@ -23,19 +23,37 @@
         ];
 
         // Variables to control positions of text and circles
-        const circleX = 200;  // X position of the circles
+        const circleX = 200;  // X position of the circles in vertical timeline
         const dateX = 50;  // X position of the date (50px from the left)
         const textYOffset = 50; // Y offset for the website text below the circle
         let lineYStart = 0;  // Starting Y position for the line animation
         let circles = [];  // Array to store circle positions for animation
+        let horizontalAnimActive = false;
+        let horizontalLineXStart = circleX;  // X position of the horizontal line animation
+        let targetPublisherIndex = -1; // To track the clicked publisher
 
         function setup() {
-            let canvas = createCanvas(400, nodes.length * 120);
+            let canvas = createCanvas(600, nodes.length * 120);
             canvas.parent('timeline');
 
             // Initialize circle positions off-canvas for animation
             for (let i = 0; i < nodes.length; i++) {
-                circles.push({ x: circleX, y: -50, size: 40 });  // Start off-canvas above, with initial size
+                circles.push({ x: circleX, y: -50, size: 40, horizontalX: circleX });
+            }
+
+            // Detect clicks
+            canvas.mousePressed(handleClick);
+        }
+
+        function handleClick() {
+            for (let i = 0; i < nodes.length; i++) {
+                let d = dist(mouseX, mouseY, circles[i].x, circles[i].y);
+                if (d < circles[i].size / 2 && nodes[i].type === 'publisher') {
+                    horizontalAnimActive = true;
+                    targetPublisherIndex = i;
+                    resizeCanvas(1000, nodes.length * 120); // Resize canvas to accommodate horizontal animation
+                    break;
+                }
             }
         }
 
@@ -83,6 +101,24 @@
                     // Website (centered below the circle)
                     textAlign(CENTER);
                     text(node.website, circles[i].x, circles[i].y + textYOffset);  // Website below the circle
+                }
+
+                // Animate horizontal expansion when a publisher is clicked
+                if (horizontalAnimActive && i === targetPublisherIndex) {
+                    // Draw horizontal line
+                    if (circles[i].horizontalX < width - 100) {
+                        circles[i].horizontalX += 5;  // Speed of horizontal expansion
+                    }
+                    line(circles[i].x, circles[i].y, circles[i].horizontalX, circles[i].y);
+
+                    // Draw a new circle at the end of the horizontal line
+                    fill('#2980B9');  // Blue for the expanding circle
+                    ellipse(circles[i].horizontalX, circles[i].y, circles[i].size, circles[i].size);
+
+                    // Display additional info or text at the end of the horizontal line (optional)
+                    fill(0);
+                    textAlign(LEFT);
+                    text("Expanded Data", circles[i].horizontalX + 50, circles[i].y + 5);
                 }
             }
         }
