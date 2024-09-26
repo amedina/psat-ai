@@ -23,6 +23,7 @@
 <body>
 <div id="infoPanel"></div>
 <script>
+
 let user;
 let interestGroups = [];
 let advertisers = [];
@@ -34,23 +35,84 @@ let state = 'browsing'; // States: browsing, auction, result
 let infoPanel;
 let flows = [];
 let restartTimer = 0;
+const convasHeight = 400;
+const webSiteNodeXMargin = 100;
+const webSiteNodeYMargin = 200;
+
 
 function setup() {
-    createCanvas(windowWidth, windowHeight);
+    createCanvas(windowWidth, convasHeight);
     user = new User(width / 2, height / 2);
+
+    const advertiserNodes = [
+        {
+            name: 'TechGadgets',
+            color: 'red',
+            x: webSiteNodeXMargin,
+            y: webSiteNodeYMargin
+        },
+        {
+            name: 'FashionTrends',
+            color: 'green',
+            x: webSiteNodeXMargin * 2,
+            y: webSiteNodeYMargin
+        },
+        {
+            name: 'TravelDreams',
+            color: 'blue',
+            x: webSiteNodeXMargin * 3,
+            y: webSiteNodeYMargin
+        },
+        {
+            name: 'BBC.com',
+            color: 'yellow',
+            x: webSiteNodeXMargin * 4,
+            y: webSiteNodeYMargin
+        }
+    ];
+
+    const publisherNodes = [
+        {
+            name: 'NewsDaily',
+            color: 'yellow',
+            x: webSiteNodeXMargin * 5,
+            y: webSiteNodeYMargin
+        },
+        {
+            name: 'SocialConnect',
+            color: 'magenta',
+            x: webSiteNodeXMargin * 6,
+            y: webSiteNodeYMargin
+        }
+    ];
+
+    const dspNodes = [
+        {
+            name: 'DSP1',
+            x: webSiteNodeXMargin * 4,
+            y: webSiteNodeYMargin * 1.5
+        },
+        {
+            name: 'DSP2',
+            x: webSiteNodeXMargin * 6,
+            y: webSiteNodeYMargin * 1.5
+        }
+    ];
     
     // Create advertisers
-    advertisers.push(new Advertiser('TechGadgets', color(255, 0, 0), 100, 100));
-    advertisers.push(new Advertiser('FashionTrends', color(0, 255, 0), width - 100, 100));
-    advertisers.push(new Advertiser('TravelDreams', color(0, 0, 255), 100, height - 100));
+    for (let node of advertiserNodes) {
+        advertisers.push(new Advertiser(node.name, color(node.color), node.x, node.y));
+    }
     
     // Create publishers
-    publishers.push(new Publisher('NewsDaily', color(255, 255, 0), width - 100, height - 100));
-    publishers.push(new Publisher('SocialConnect', color(255, 0, 255), width / 2, 50));
+    for (let node of publisherNodes) {
+        publishers.push(new Publisher(node.name, color(node.color), node.x, node.y));
+    }
     
     // Create DSPs
-    dsps.push(new DSP('DSP1', 200, height / 2));
-    dsps.push(new DSP('DSP2', width - 200, height / 2));
+    for (let node of dspNodes) {
+        dsps.push(new DSP(node.name, node.x, node.y));
+    }
     
     infoPanel = select('#infoPanel');
     updateInfoPanel("Move the cursor (user) over advertisers to generate interest groups, then visit a publisher to trigger an auction.");
@@ -364,7 +426,7 @@ function restartSimulation() {
 }
 
 function windowResized() {
-    resizeCanvas(windowWidth, windowHeight);
+    resizeCanvas(windowWidth, convasHeight);
 }
 
 function updateInfoPanel(text) {
