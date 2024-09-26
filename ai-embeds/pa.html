@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vertical Timeline with Animation and Hover Effect</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
+    <style>
+        #timeline {
+            overflow-y: auto;
+            position: relative;
+        }
+    </style>
+</head>
+<body>
+    <div id="timeline"></div>
+    <script>
+        let nodes = [
+            { type: 'publisher', website: 'example1.com', datetime: '2023-10-01 10:00' },
+            { type: 'advertiser', website: 'example2.com', datetime: '2023-10-01 11:00' },
+            { type: 'publisher', website: 'example3.com', datetime: '2023-10-01 12:00' },
+            { type: 'advertiser', website: 'example4.com', datetime: '2023-10-01 13:00' }
+        ];
+
+        // Variables to control positions of text and circles
+        const circleX = 200;  // X position of the circles
+        const dateX = 50;  // X position of the date (50px from the left)
+        const textYOffset = 50; // Y offset for the website text below the circle
+        let lineYStart = 0;  // Starting Y position for the line animation
+        let circles = [];  // Array to store circle positions for animation
+
+        function setup() {
+            let canvas = createCanvas(400, nodes.length * 120);
+            canvas.parent('timeline');
+
+            // Initialize circle positions off-canvas for animation
+            for (let i = 0; i < nodes.length; i++) {
+                circles.push({ x: circleX, y: -50, size: 40 });  // Start off-canvas above, with initial size
+            }
+        }
+
+        function draw() {
+            background(245);
+            stroke(0);
+
+            // Animate vertical line drawing
+            const lineX = circleX;
+            if (lineYStart < height) {
+                line(lineX, 0, lineX, lineYStart);
+                lineYStart += 5;  // Speed of line drawing
+            } else {
+                line(lineX, 0, lineX, height);  // Ensure line completes
+            }
+
+            // Animate circles moving into place
+            for (let i = 0; i < nodes.length; i++) {
+                let targetY = i * 120 + 50;
+                let node = nodes[i];
+
+                // Move circles into position
+                if (circles[i].y < targetY) {
+                    circles[i].y += 5;  // Speed of circle movement
+                }
+
+                // Check if the mouse is over the circle and apply zoom effect
+                let d = dist(mouseX, mouseY, circles[i].x, circles[i].y);
+                if (d < circles[i].size / 2) {
+                    circles[i].size = lerp(circles[i].size, 60, 0.1);  // Smooth zoom-in
+                } else {
+                    circles[i].size = lerp(circles[i].size, 40, 0.1);  // Smooth zoom-out
+                }
+
+                // Draw circles
+                fill(node.type === 'publisher' ? '#E74C3C' : '#27AE60');
+                ellipse(circles[i].x, circles[i].y, circles[i].size, circles[i].size);
+
+                // Date and time (50px from the left)
+                fill(0);
+                textAlign(LEFT);
+                if (circles[i].y >= targetY) {  // Only display text after circle is in place
+                    text(node.datetime, dateX, circles[i].y + 5);  // Date on the left
+
+                    // Website (centered below the circle)
+                    textAlign(CENTER);
+                    text(node.website, circles[i].x, circles[i].y + textYOffset);  // Website below the circle
+                }
+            }
+        }
+    </script>
+</body>
+</html>
