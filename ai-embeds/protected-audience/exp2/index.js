@@ -127,18 +127,18 @@ function drawDiagram( cirlceNumber ) {
   // Draw Medium blocks
   for ( let i = 0; i < mediumBoxes.length; i++ ) {
     const topHeight = y + box.height;
+    const textXPosition = x + mediumBox.width / 2;
+    const textYPosition = topHeight + (mediumBox.height / 2) + (lineHeight * ( i + 1)) + (mediumBox.height * i);
+    const boxYPosition = topHeight + (lineHeight * i) + lineHeight * (i + 1);
 
-     rect(
-       x, 
-       topHeight + (lineHeight * i) + lineHeight * (i + 1), 
-       mediumBox.width, 
-       mediumBox.height
-     );
-
-    text(
-      mediumBoxes[i],
-      x + mediumBox.width / 2, 
-      topHeight + (mediumBox.height / 2) + (lineHeight * ( i + 1)) + (mediumBox.height * i),
-    ); 
+    rect(x, boxYPosition, mediumBox.width, mediumBox.height );
+    text( mediumBoxes[i], textXPosition, textYPosition );
+    
+    line(
+      textXPosition,
+      boxYPosition - lineHeight, 
+      textXPosition,
+      boxYPosition + lineHeight * i - mediumBox.height * i
+    );
   }
 }
