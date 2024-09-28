@@ -69,17 +69,18 @@ function drawTimeline({ timeline, circleDiameter, circleVerticalSpacing, circles
 function drawDiagram( cirlceNumber ) {
   
   // Set text and rectangle styles
-  const box = { width: 125, height: 80 };
+  const box = { width: 125, height: 100 };
   const smallBox = { width: 80, height: 50 };
   const mediumBox = { width: box.width, height: 50 };
   const lineWidth = 100;
   const lineHeight = 50;
   
   // Calculate (x, y) cordinates.
-  const x = config.timeline.x + lineWidth + 20;
+  const spaceFromTimeline = lineWidth + config.circleDiameter / 2;
+  const x = config.timeline.x + spaceFromTimeline;
   const cirlceRadius = config.circleDiameter / 2;
   const circleHeights = config.circleDiameter * cirlceNumber - cirlceRadius;
-  const circleVerticalHeights = config.circleVerticalSpacing * (cirlceNumber - 1) - config.circleVerticalSpacing/2 + 10;
+  const circleVerticalHeights = config.circleVerticalSpacing * (cirlceNumber - 1) - config.circleVerticalSpacing/2;
   const y = circleHeights + circleVerticalHeights;
   
   textAlign(CENTER, CENTER);
@@ -87,14 +88,22 @@ function drawDiagram( cirlceNumber ) {
   // Draw SSP block (rectangle 1)
   rect(x, y, box.width, box.height); // SSP rectangle
   text("SSP", x + box.width / 2, y + box.height / 2); // SSP text
+  line( 
+    x - spaceFromTimeline + config.circleDiameter / 2, 
+    y + box.height/2, 
+    x, 
+    y + box.height/2 
+  );
 
   // Draw DSP blocks
   for ( let i = 0; i <= 1; i++ ) {
-    const marginTop = -25;
+    const marginTop = -10;
+    const verticalSpacing = 20;
+    const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
 
      rect(
-       x + box.width + lineWidth, 
-       y + lineWidth * i + marginTop, 
+       x + box.width + lineWidth,
+       y + ( smallBox.height + verticalSpacing ) * i + marginTop, 
        smallBox.width, 
        smallBox.height
      );
@@ -102,7 +111,14 @@ function drawDiagram( cirlceNumber ) {
     text(
       "DSP " + (i + 1),
       x + box.width / 2 + lineWidth + smallBox.width + smallBox.width / 4, 
-      y + smallBox.height / 2 + lineHeight * i + smallBox.height * i + marginTop
+      textYPosition
+    );
+    
+    line( 
+      x + box.width,
+      textYPosition, 
+      x + box.width + lineWidth, 
+      textYPosition, 
     );
   }
   
@@ -126,63 +142,3 @@ function drawDiagram( cirlceNumber ) {
     ); 
   }
 }
-
-// function drawFlowBoxesAndLines({ timeline, horizontalLineLength, circleVerticalSpacing, boxDimensions, circleDiameter }) {
-//   const cirlceNumber = 3;
-//   const cirlceRadius = circleDiameter / 2;
-//   const verticalLineSpacing = 15;
-//   const SSPHeight = boxDimensions.height + 100;
-//   const circleVerticalSpace = circleVerticalSpacing + circleDiameter;
-//   const heightFromTop = circleVerticalSpace * ( cirlceNumber - 1 ) + cirlceRadius;
-  
-//   // Horizontal line 1 between circle and first box
-//   line(  
-//     timeline.x + cirlceRadius, 
-//     heightFromTop + cirlceRadius,
-//     timeline.x + cirlceRadius + horizontalLineLength, 
-//     heightFromTop + cirlceRadius
-//   );
-  
-//   // Second Line
-//   line(  
-//     timeline.x + cirlceRadius + boxDimensions.width, 
-//     heightFromTop + cirlceRadius - verticalLineSpacing,
-//     timeline.x + cirlceRadius + horizontalLineLength + boxDimensions.width + horizontalLineLength, 
-//     heightFromTop + cirlceRadius - verticalLineSpacing
-//   );
-  
-//   // Third Line
-//   line(  
-//     timeline.x + cirlceRadius + boxDimensions.width, 
-//     heightFromTop + cirlceRadius + verticalLineSpacing,
-//     timeline.x + cirlceRadius + horizontalLineLength + boxDimensions.width + horizontalLineLength, 
-//     heightFromTop + cirlceRadius + verticalLineSpacing
-//   );
-  
-//   // First box
-//   rect(
-//     timeline.x + horizontalLineLength, 
-//     heightFromTop, 
-//     boxDimensions.width, 
-//     SSPHeight
-//   );
-  
-//   rect(
-//     timeline.x + horizontalLineLength * 2 + boxDimensions.width, 
-//     heightFromTop - verticalLineSpacing, 
-//     boxDimensions.width, 
-//     boxDimensions.height
-//   );
-  
-//   text( 
-//     'SSP',
-//     timeline.x + horizontalLineLength + boxDimensions.width / 2 - 12, 
-//     heightFromTop + boxDimensions.height / 2 + 5
-//   );
-  
-//   text( 
-//     'DSP 1',
-//     (timeline.x + horizontalLineLength * 3 + boxDimensions.width / 2 - 12), 
-//     heightFromTop + boxDimensions.height / 2 + 5
-//   );
-// }
