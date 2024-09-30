@@ -19,7 +19,8 @@ const config = {
 };
 
 const animated = {
-  timelineVerticleLine: undefined
+  timelineVerticleLine: undefined,
+  ssp: undefined
 }
 
 function setup() {
@@ -40,13 +41,8 @@ function drawTimeline({ position, circleProps, circles }) {
   const leftPadding = 10;
   
   textAlign(LEFT, CENTER);
-  
-  // Draw the vertical timeline line
-  if (!animated.timelineVerticleLine) {
-    animated.timelineVerticleLine = animateLine(position.x, position.y, position.x, circleVerticalSpace * circles.length);
-  }
 
-  animated.timelineVerticleLine();
+  animateLineOnce('timelineVerticleLine', position.x, position.y, position.x, circleVerticalSpace * circles.length );
   
   // Draw circles and text at the timeline position
   circles.forEach((circleItem, index) => {
@@ -85,19 +81,20 @@ function drawDiagram(circleNumber) {
   // Draw SSP block (rectangle 1)
   rect(x, y, box.width, box.height);
   text("SSP", x + box.width / 2, y + box.height / 2);
-  line(x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2);
+  animateLineOnce( 'ssp', x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2, 0.06);
   
   // Draw DSP blocks
   for (let i = 0; i <= 1; i++) {
     const marginTop = -10;
     const verticalSpacing = 20;
     const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
+    const title = "DSP " + (i + 1);
     
     rect(x + box.width + lineWidth, y + (smallBox.height + verticalSpacing) * i + marginTop, smallBox.width, smallBox.height);
     
-    text("DSP " + (i + 1), x + box.width / 2 + lineWidth + smallBox.width + smallBox.width / 4, textYPosition);
+    text(title, x + box.width / 2 + lineWidth + smallBox.width + smallBox.width / 4, textYPosition);
     
-    line(x + box.width, textYPosition, x + box.width + lineWidth, textYPosition);
+    animateLineOnce( title, x + box.width, textYPosition, x + box.width + lineWidth, textYPosition, 0.05);
   }
   
   const mediumBoxes = ['runAuction()', 'Show Winning Ad'];
@@ -108,11 +105,12 @@ function drawDiagram(circleNumber) {
     const textXPosition = x + mediumBox.width / 2;
     const textYPosition = topHeight + (mediumBox.height / 2) + (lineHeight * (i + 1)) + (mediumBox.height * i);
     const boxYPosition = topHeight + (lineHeight * i) + lineHeight * (i + 1);
+    const title = mediumBoxes[i];
     
     rect(x, boxYPosition, mediumBox.width, mediumBox.height);
-    text(mediumBoxes[i], textXPosition, textYPosition);
+    text(title, textXPosition, textYPosition);
     
-    line(textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i);
+    animateLineOnce( title, textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i, 0.06);
   }
 }
 
@@ -142,4 +140,13 @@ function animateLine(startX, startY, endX, endY, speed = 0.01) {
       done = true;
     }
   };
+}
+
+function animateLineOnce( func, startX, startY, endX, endY, speed = 0.01) {
+    // Draw the vertical timeline line
+    if (!animated[func]) {
+      animated[func] = animateLine(startX, startY, endX, endY, speed);
+    }
+  
+    animated[func]();
 }
