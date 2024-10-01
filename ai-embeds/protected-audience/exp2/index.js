@@ -57,8 +57,9 @@ function setup() {
   drawTimeline(config.timeline);
   handlePlayPauseButttons();
 
+  // On first render.
   renderUserIcon();
-  setupInterval();
+  play();
 }
 
 function setupInterval() {
