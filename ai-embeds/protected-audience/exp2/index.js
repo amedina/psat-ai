@@ -8,6 +8,7 @@ const config = {
       diameter: 50,
       verticalSpacing: 50,
     },
+    stepDelay: 1000,
     user: {
       width: 30,
       height: 30,
@@ -65,7 +66,7 @@ function setupInterval() {
       renderUserIcon();
       timeline.currentIndex++;
     }
-  }, 1000);
+  }, config.timeline.stepDelay);
 }
 
 function handlePlayPauseButttons () {
