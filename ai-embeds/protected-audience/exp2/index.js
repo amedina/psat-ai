@@ -36,7 +36,20 @@ const app = {
     ssp: undefined
   },
   utils: {},
-  render: {}
+}
+
+app.play = () => {
+  app.playButton.classList.add('hidden');
+  app.pauseButton.classList.remove('hidden');
+  app.isPaused = false;
+  app.setupInterval();
+}
+
+app.pause = () => {
+  app.pauseButton.classList.add('hidden');
+  app.playButton.classList.remove('hidden');
+  app.isPaused = true;
+  clearInterval(app.internval);
 }
 
 app.setupInterval = () => {
@@ -54,20 +67,6 @@ app.handlePlayPauseButttons = () => {
 
   app.playButton.addEventListener("click", app.play);
   app.pauseButton.addEventListener("click", app.pause);
-}
-
-app.play = () => {
-  app.playButton.classList.add('hidden');
-  app.pauseButton.classList.remove('hidden');
-  app.isPaused = false;
-  app.setupInterval();
-}
-
-app.pause = () => {
-  app.pauseButton.classList.add('hidden');
-  app.playButton.classList.remove('hidden');
-  app.isPaused = true;
-  clearInterval(app.internval);
 }
 
 app.drawTimeline = ({ position, circleProps, circles }) => {
@@ -148,7 +147,7 @@ app.drawAuctionFlow = () => {
   // Draw SSP block (rectangle 1)
   rect(x, y, box.width, box.height);
   text("SSP", x + box.width / 2, y + box.height / 2);
-  app.animateLineOnce( 'ssp', x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2, 0.06);
+  app.utils.animateLineOnce( 'ssp', x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2, 0.06);
   
   // Draw DSP blocks
   for (let i = 0; i <= 1; i++) {
@@ -161,7 +160,7 @@ app.drawAuctionFlow = () => {
     
     text(title, x + box.width / 2 + lineWidth + smallBox.width + smallBox.width / 4, textYPosition);
     
-    app.animateLineOnce( title, x + box.width, textYPosition, x + box.width + lineWidth, textYPosition, 0.05);
+    app.utils.animateLineOnce( title, x + box.width, textYPosition, x + box.width + lineWidth, textYPosition, 0.05);
   }
   
   const mediumBoxes = ['runAuction()', 'Show Winning Ad'];
@@ -177,11 +176,11 @@ app.drawAuctionFlow = () => {
     rect(x, boxYPosition, mediumBox.width, mediumBox.height);
     text(title, textXPosition, textYPosition);
     
-    app.animateLineOnce( title, textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i, 0.06, 'down');
+    app.utils.animateLineOnce( title, textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i, 0.06, 'down');
   }
 }
 
-app.animateLine = (startX, startY, endX, endY, speed = 0.01, direction = 'right') => {
+app.utils.animateLine = (startX, startY, endX, endY, speed = 0.01, direction = 'right') => {
   let currentX = startX;
   let currentY = startY;
   let done = false;
@@ -215,10 +214,10 @@ app.animateLine = (startX, startY, endX, endY, speed = 0.01, direction = 'right'
   };
 }
 
-app.animateLineOnce = ( func, startX, startY, endX, endY, speed = 0.01, direction = 'right') => {
+app.utils.animateLineOnce = ( func, startX, startY, endX, endY, speed = 0.01, direction = 'right') => {
     // Draw the vertical timeline line
     if (!app.animated[func]) {
-      app.animated[func] = app.animateLine(startX, startY, endX, endY, speed, direction);
+      app.animated[func] = app.utils.animateLine(startX, startY, endX, endY, speed, direction);
     }
   
     app.animated[func]();
