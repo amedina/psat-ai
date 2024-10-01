@@ -8,7 +8,7 @@ const config = {
       diameter: 50,
       verticalSpacing: 50,
     },
-    stepDelay: 1000,
+    stepDelay: 1500,
     user: {
       width: 30,
       height: 30,
@@ -57,6 +57,7 @@ function setup() {
   drawTimeline(config.timeline);
   handlePlayPauseButttons();
 
+  renderUserIcon();
   setupInterval();
 }
 
