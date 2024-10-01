@@ -117,6 +117,11 @@ function drawTimelineKiLine() {
 
 function renderUserIcon( index  ) {
   const circlePosition = timeline.circlePositions[index];
+
+  if ( circlePosition === undefined ) {
+    return;
+  }
+
   const user = config.timeline.user;
 
   image(userIcon, circlePosition.x - user.width/2, circlePosition.y - user.height/2, user.width, user.height);
