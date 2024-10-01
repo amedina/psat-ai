@@ -62,7 +62,6 @@ function setup() {
 function setupInterval() {
   timeline.internval = setInterval( () => {
     if ( ! timeline.isPaused ) {
-      console.log( "Should render icon" );
       renderUserIcon();
       timeline.currentIndex++;
     }
