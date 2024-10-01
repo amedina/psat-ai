@@ -30,6 +30,11 @@ const animated = {
   ssp: undefined
 }
 
+const timeline = {
+  isPaused: false,
+  circlePositions: [],
+}
+
 function preload() {
   // Load the icon image in the preload() function to ensure it is loaded before use
   arrowRightIcon = loadImage('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAR1JREFUeF7t2cENg0AQA8ClsiSd8OBBF6EMHomUdEJnoJMoYF+2tWveJyHPeQMXpmh+Tc3zhwHcgOYCHoHmBfCPoEfAI9BcwCPQvAB+CngEPALNBTwCzQuAeQrMy/r8ffZDERsyAvOybucZj/93f6khIAHeEXGoIaABRgGkEBgAUggsABkEJoAEAhuAjqAAQEVQAaAhKAFQENQA4AiKAFAEAyAOJ/dhaJwFMhf0VVmtAdDwYzeUAODhlQAo4VUAaOEVAKjh2QD08EwAifAsAJnwDACp8GiA1n+L9/4wkjkAsNZAXoVZ4TL3NUBGqfIaN6Dy7mayuQEZpcpr3IDKu5vJ5gZklCqvcQMq724mmxuQUaq8xg2ovLuZbO0bcAF7yK5BD9q4CwAAAABJRU5ErkJggg=='); 
@@ -44,22 +49,43 @@ function setup() {
   const canvas = createCanvas(config.canvas.width, circleVerticalSpace * config.timeline.circles.length);
   canvas.parent('ps-canvas');
   background(245);
+
+  drawTimeline(config.timeline);
+  handlePlayPauseButttons();
+
+  renderUserIcon( 2 );
+}
+
+function handlePlayPauseButttons () {
+  const playButton = document.getElementById("play");
+  const pauseButton = document.getElementById("pause");
+
+  playButton.addEventListener("click", function () {
+    playButton.classList.add('hidden');
+    pauseButton.classList.remove('hidden');
+    config.timeline.isPaused = false;
+  });
+
+  pauseButton.addEventListener("click", function () {
+    pauseButton.classList.add('hidden');
+    playButton.classList.remove('hidden');
+    timeline.isPaused = true;
+  });
 }
 
 function draw() {
   textSize(12);
-  drawTimeline(config.timeline);
   drawDiagram(3);
 }
 
-function drawTimeline({ position, circleProps, circles, user }) {
+function drawTimeline({ position, circleProps, circles }) {
   const { diameter, verticalSpacing } = circleProps;
   const circleVerticalSpace = verticalSpacing + diameter;
   const leftPadding = 10;
   
   textAlign(LEFT, CENTER);
 
-  animateLineOnce('timelineVerticleLine', position.x, position.y, position.x, circleVerticalSpace * circles.length );
+  line( position.x, position.y, position.x, circleVerticalSpace * circles.length );
   
   // Draw circles and text at the timeline position
   circles.forEach((circleItem, index) => {
@@ -67,9 +93,7 @@ function drawTimeline({ position, circleProps, circles, user }) {
     
     circle(position.x, yPosition, diameter);
 
-    if ( index === 0 ) {
-      image(userIcon, position.x - user.width/2, yPosition - user.height/2, user.width, user.height);
-    }
+    timeline.circlePositions.push({ x: position.x, y: yPosition });
     
     text(circleItem.datetime, leftPadding, yPosition);
     text(circleItem.website, leftPadding, yPosition + 20);
@@ -77,6 +101,13 @@ function drawTimeline({ position, circleProps, circles, user }) {
     // Draw line leading out of the circle
     line(position.x - 25, yPosition, position.x - 40, yPosition);
   });
+}
+
+function renderUserIcon( index  ) {
+  const circlePosition = timeline.circlePositions[index];
+  const user = config.timeline.user;
+
+  image(userIcon, circlePosition.x - user.width/2, circlePosition.y - user.height/2, user.width, user.height);
 }
 
 function drawDiagram(circleNumber) {
