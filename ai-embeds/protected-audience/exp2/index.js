@@ -33,6 +33,8 @@ const animated = {
 const timeline = {
   isPaused: false,
   circlePositions: [],
+  currentIndex: 0,
+  internval: undefined,
 }
 
 function preload() {
@@ -54,11 +56,16 @@ function setup() {
   drawTimeline(config.timeline);
   handlePlayPauseButttons();
 
-  let userIndex = 0;
+  setupInterval();
+}
 
-  setInterval( () => {
-    renderUserIcon( userIndex );
-    userIndex++;
+function setupInterval() {
+  timeline.internval = setInterval( () => {
+    if ( ! timeline.isPaused ) {
+      console.log( "Should render icon" );
+      renderUserIcon();
+      timeline.currentIndex++;
+    }
   }, 1000);
 }
 
@@ -66,22 +73,29 @@ function handlePlayPauseButttons () {
   const playButton = document.getElementById("play");
   const pauseButton = document.getElementById("pause");
 
+  if ( timeline.isPaused ) {
+    playButton.classList.remove('hidden');
+    pauseButton.classList.add('hidden');
+  }
+
   playButton.addEventListener("click", function () {
     playButton.classList.add('hidden');
     pauseButton.classList.remove('hidden');
-    config.timeline.isPaused = false;
+    timeline.isPaused = false;
+    setupInterval();
   });
 
   pauseButton.addEventListener("click", function () {
     pauseButton.classList.add('hidden');
     playButton.classList.remove('hidden');
     timeline.isPaused = true;
+    clearInterval(timeline.internval);
   });
 }
 
 function draw() {
   textSize(12);
-  drawDiagram(3);
+  drawAuctionFlow();
 }
 
 function drawTimeline({ position, circleProps, circles }) {
@@ -121,8 +135,8 @@ function drawTimelineKiLine() {
   line( position.x, position.y, position.x, circleVerticalSpace * config.timeline.circles.length );
 }
 
-function renderUserIcon( index  ) {
-  const circlePosition = timeline.circlePositions[index];
+function renderUserIcon() {
+  const circlePosition = timeline.circlePositions[timeline.currentIndex];
 
   if ( circlePosition === undefined ) {
     return;
@@ -130,16 +144,17 @@ function renderUserIcon( index  ) {
 
   const user = config.timeline.user;
 
-  if ( index > 0 ) {
-    drawCircle( index - 1 );
+  if ( timeline.currentIndex > 0 ) {
+    drawCircle( timeline.currentIndex - 1 );
   }
 
   image(userIcon, circlePosition.x - user.width/2, circlePosition.y - user.height/2, user.width, user.height);
 }
 
-function drawDiagram(circleNumber) {
+function drawAuctionFlow() {
   const { position, circleProps } = config.timeline;
   const { diameter, verticalSpacing } = circleProps;
+  const circleNumber = 3;
   
   const box = { width: 125, height: 100 };
   const smallBox = { width: 80, height: 50 };
