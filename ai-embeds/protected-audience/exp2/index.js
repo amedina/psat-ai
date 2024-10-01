@@ -71,27 +71,25 @@ function setupInterval() {
 }
 
 function handlePlayPauseButttons () {
-  const playButton = document.getElementById("play");
-  const pauseButton = document.getElementById("pause");
+  timeline.playButton = document.getElementById("play");
+  timeline.pauseButton = document.getElementById("pause");
 
-  if ( timeline.isPaused ) {
-    playButton.classList.remove('hidden');
-    pauseButton.classList.add('hidden');
-  }
+  timeline.playButton.addEventListener("click", play);
+  timeline.pauseButton.addEventListener("click", pause);
+}
 
-  playButton.addEventListener("click", function () {
-    playButton.classList.add('hidden');
-    pauseButton.classList.remove('hidden');
-    timeline.isPaused = false;
-    setupInterval();
-  });
+function play() {
+  timeline.playButton.classList.add('hidden');
+  timeline.pauseButton.classList.remove('hidden');
+  timeline.isPaused = false;
+  setupInterval();
+}
 
-  pauseButton.addEventListener("click", function () {
-    pauseButton.classList.add('hidden');
-    playButton.classList.remove('hidden');
-    timeline.isPaused = true;
-    clearInterval(timeline.internval);
-  });
+function pause() {
+  timeline.pauseButton.classList.add('hidden');
+  timeline.playButton.classList.remove('hidden');
+  timeline.isPaused = true;
+  clearInterval(timeline.internval);
 }
 
 function draw() {
@@ -155,6 +153,7 @@ function renderUserIcon() {
 function drawAuctionFlow() {
   const { position, circleProps } = config.timeline;
   const { diameter, verticalSpacing } = circleProps;
+  const currentTime = config.timeline.circles[timeline.currentIndex];
   const circleNumber = 3;
   
   const box = { width: 125, height: 100 };
