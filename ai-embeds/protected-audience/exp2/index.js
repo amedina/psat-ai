@@ -50,10 +50,16 @@ function setup() {
   canvas.parent('ps-canvas');
   background(245);
 
+  drawTimelineKiLine();
   drawTimeline(config.timeline);
   handlePlayPauseButttons();
 
-  renderUserIcon( 2 );
+  let userIndex = 0;
+
+  setInterval( () => {
+    renderUserIcon( userIndex );
+    userIndex++;
+  }, 1000);
 }
 
 function handlePlayPauseButttons () {
@@ -84,8 +90,6 @@ function drawTimeline({ position, circleProps, circles }) {
   const leftPadding = 10;
   
   textAlign(LEFT, CENTER);
-
-  line( position.x, position.y, position.x, circleVerticalSpace * circles.length );
   
   // Draw circles and text at the timeline position
   circles.forEach((circleItem, index) => {
@@ -101,6 +105,14 @@ function drawTimeline({ position, circleProps, circles }) {
     // Draw line leading out of the circle
     line(position.x - 25, yPosition, position.x - 40, yPosition);
   });
+}
+
+function drawTimelineKiLine() {
+  const position = config.timeline.position;
+  const { diameter, verticalSpacing } = config.timeline.circleProps;
+  const circleVerticalSpace = verticalSpacing + diameter;
+
+  line( position.x, position.y, position.x, circleVerticalSpace * config.timeline.circles.length );
 }
 
 function renderUserIcon( index  ) {
