@@ -82,6 +82,7 @@ app.drawTimeline = ({ position, circleProps, circles }) => {
 
     app.circlePositions.push({ x: position.x, y: yPosition });
     app.drawCircle( index );
+    app.drawSmallCircles( index );
     
     text(circleItem.datetime, leftPadding, yPosition);
     text(circleItem.website, leftPadding, yPosition + 20);
@@ -96,6 +97,15 @@ app.drawCircle = ( index ) => {
   const { diameter } = config.timeline.circleProps;
 
   circle(position.x, position.y, diameter);
+}
+
+app.drawSmallCircles = ( index ) => {
+  const position = app.circlePositions[index];
+  const { diameter } = config.timeline.circleProps;
+  const smallCircleDiameter = diameter / 5;
+  const margin = 0;
+
+  circle(position.x + diameter / 2 + margin, position.y + diameter / 2 + margin, smallCircleDiameter);
 }
 
 app.drawTimelineKiLine = () => {
