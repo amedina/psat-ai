@@ -94,10 +94,9 @@ function drawTimeline({ position, circleProps, circles }) {
   // Draw circles and text at the timeline position
   circles.forEach((circleItem, index) => {
     const yPosition = verticalSpacing + circleVerticalSpace * index;
-    
-    circle(position.x, yPosition, diameter);
 
     timeline.circlePositions.push({ x: position.x, y: yPosition });
+    drawCircle( index );
     
     text(circleItem.datetime, leftPadding, yPosition);
     text(circleItem.website, leftPadding, yPosition + 20);
@@ -105,6 +104,13 @@ function drawTimeline({ position, circleProps, circles }) {
     // Draw line leading out of the circle
     line(position.x - 25, yPosition, position.x - 40, yPosition);
   });
+}
+
+function drawCircle( index ) {
+  const position = timeline.circlePositions[index];
+  const { diameter } = config.timeline.circleProps;
+
+  circle(position.x, position.y, diameter);
 }
 
 function drawTimelineKiLine() {
@@ -123,6 +129,10 @@ function renderUserIcon( index  ) {
   }
 
   const user = config.timeline.user;
+
+  if ( index > 0 ) {
+    drawCircle( index - 1 );
+  }
 
   image(userIcon, circlePosition.x - user.width/2, circlePosition.y - user.height/2, user.width, user.height);
 }
