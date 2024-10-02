@@ -82,7 +82,7 @@ app.drawTimeline = ({ position, circleProps, circles }) => {
 
     app.circlePositions.push({ x: position.x, y: yPosition });
     app.drawCircle( index );
-    app.drawSmallCircles( index );
+    // app.drawSmallCircles( index );
     
     text(circleItem.datetime, leftPadding, yPosition);
     text(circleItem.website, leftPadding, yPosition + 20);
@@ -99,14 +99,45 @@ app.drawCircle = ( index ) => {
   circle(position.x, position.y, diameter);
 }
 
-app.drawSmallCircles = ( index ) => {
+app.drawSmallCircles = (index) => {
   const position = app.circlePositions[index];
   const { diameter } = config.timeline.circleProps;
   const smallCircleDiameter = diameter / 5;
-  const margin = 0;
 
-  circle(position.x + diameter / 2 + margin, position.y + diameter / 2 + margin, smallCircleDiameter);
-}
+  const distanceFromEdge = 6;
+
+  const numSmallCircles = Math.floor(Math.random() * 3) + 1;
+
+  const smallCirclePositions = [];
+
+  for (let i = 0; i < numSmallCircles; i++) {
+    let randomX, randomY, isOverlapping;
+
+    do {
+      const angle = Math.random() * 2 * Math.PI;
+
+      randomX = position.x + (diameter / 2 + distanceFromEdge) * Math.cos(angle);
+      randomY = position.y + (diameter / 2 + distanceFromEdge) * Math.sin(angle);
+
+      isOverlapping = smallCirclePositions.some(pos => {
+        const dx = pos.x - randomX;
+        const dy = pos.y - randomY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < smallCircleDiameter;
+      });
+    } while (isOverlapping);
+
+    smallCirclePositions.push({ x: randomX, y: randomY });
+
+    const randomColor = color(random(255), random(255), random(255));
+
+		push();
+    stroke(randomColor);
+
+    circle(randomX, randomY, smallCircleDiameter);
+		pop();
+  }
+};
 
 app.drawTimelineKiLine = () => {
   const position = config.timeline.position;
@@ -155,8 +186,7 @@ app.drawAuctionFlow = () => {
   textAlign(CENTER, CENTER);
   
   // Draw SSP block (rectangle 1)
-  rect(x, y, box.width, box.height);
-  text("SSP", x + box.width / 2, y + box.height / 2);
+  app.utils.createBox( 'SSP', x, y, box.width, box.height );
   app.utils.animateLineOnce( 'ssp', x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2, 0.06);
   
   // Draw DSP blocks
@@ -166,10 +196,7 @@ app.drawAuctionFlow = () => {
     const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
     const title = "DSP " + (i + 1);
     
-    rect(x + box.width + lineWidth, y + (smallBox.height + verticalSpacing) * i + marginTop, smallBox.width, smallBox.height);
-    
-    text(title, x + box.width / 2 + lineWidth + smallBox.width + smallBox.width / 4, textYPosition);
-    
+    app.utils.createBox( title, x + box.width + lineWidth, y + (smallBox.height + verticalSpacing) * i + marginTop, smallBox.width, smallBox.height );
     app.utils.animateLineOnce( title, x + box.width, textYPosition, x + box.width + lineWidth, textYPosition, 0.05);
   }
   
@@ -179,13 +206,10 @@ app.drawAuctionFlow = () => {
   for (let i = 0; i < mediumBoxes.length; i++) {
     const topHeight = y + box.height;
     const textXPosition = x + mediumBox.width / 2;
-    const textYPosition = topHeight + (mediumBox.height / 2) + (lineHeight * (i + 1)) + (mediumBox.height * i);
     const boxYPosition = topHeight + (lineHeight * i) + lineHeight * (i + 1);
     const title = mediumBoxes[i];
     
-    rect(x, boxYPosition, mediumBox.width, mediumBox.height);
-    text(title, textXPosition, textYPosition);
-    
+    app.utils.createBox(title, x, boxYPosition, mediumBox.width, mediumBox.height);
     app.utils.animateLineOnce( title, textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i, 0.06, 'down');
   }
 }
@@ -231,6 +255,11 @@ app.utils.animateLineOnce = ( func, startX, startY, endX, endY, speed = 0.01, di
     }
   
     app.animated[func]();
+}
+
+app.utils.createBox = (title, x, y, width, height) => {
+  rect(x, y, width, height);
+  text(title, x + width / 2, y + height / 2);
 }
 
 function preload() {
