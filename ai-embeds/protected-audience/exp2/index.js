@@ -29,13 +29,34 @@ const config = {
 const app = {
   isPaused: false,
   circlePositions: [],
+  circlePublisherIndices: [],
   currentIndex: 0,
   internval: undefined,
   animated: {
     timelineVerticleLine: undefined,
     ssp: undefined
   },
+  canDrawAuctionFlow: false,
   utils: {},
+  flow: {
+    config: {
+      box: { width: 125, height: 100 },
+      smallBox: { width: 80, height: 50 },
+      mediumBox: { width: 125, height: 50 },
+      lineWidth: 100,
+      lineHeight: 50,
+    }
+  },
+}
+
+app.init = () => {
+  app.handlePlayPauseButttons();
+
+  config.timeline.circles.forEach((circle, index) => {
+    if (circle.type === 'publisher') {
+      app.circlePublisherIndices.push(index);
+    }
+  });
 }
 
 app.play = () => {
@@ -49,13 +70,18 @@ app.pause = () => {
   app.pauseButton.classList.add('hidden');
   app.playButton.classList.remove('hidden');
   app.isPaused = true;
-  clearInterval(app.internval);
+  app.utils.clearRequestInterval(app.internval);
 }
 
 app.setupInterval = () => {
-  app.internval = setInterval( () => {
+  app.internval = app.utils.requestInterval( () => {
     if ( ! app.isPaused ) {
       app.renderUserIcon();
+      if ( app.circlePublisherIndices.includes(app.currentIndex) ) {
+        app.canDrawAuctionFlow = true;
+        app.utils.clearRequestInterval( app.internval );
+        return;
+      }
       app.currentIndex++;
     }
   }, config.timeline.stepDelay);
@@ -163,17 +189,16 @@ app.renderUserIcon = () => {
   image(userIcon, circlePosition.x - user.width/2, circlePosition.y - user.height/2, user.width, user.height);
 }
 
-app.drawAuctionFlow = () => {
+app.flow.drawAuction = () => {
   const { position, circleProps } = config.timeline;
   const { diameter, verticalSpacing } = circleProps;
-  const currentTime = config.timeline.circles[app.currentIndex];
-  const circleNumber = 3;
-  
-  const box = { width: 125, height: 100 };
-  const smallBox = { width: 80, height: 50 };
-  const mediumBox = { width: 125, height: 50 };
-  const lineWidth = 100;
-  const lineHeight = 50;
+  const currentCircle = config.timeline.circles[app.currentIndex];
+  const circleNumber = app.currentIndex + 1;
+  const { box, smallBox, mediumBox, lineWidth, lineHeight } = app.flow.config;
+
+  if ( currentCircle.type !== 'publisher' || ! app.canDrawAuctionFlow ) {
+    return;
+  }
   
   // Calculate (x, y) coordinates
   const spaceFromTimeline = lineWidth + diameter / 2;
@@ -186,7 +211,7 @@ app.drawAuctionFlow = () => {
   textAlign(CENTER, CENTER);
   
   // Draw SSP block (rectangle 1)
-  app.utils.createBox( 'SSP', x, y, box.width, box.height );
+  app.flow.createBox( 'SSP', x, y, box.width, box.height );
   app.utils.animateLineOnce( 'ssp', x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2, 0.06);
   
   // Draw DSP blocks
@@ -196,7 +221,7 @@ app.drawAuctionFlow = () => {
     const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
     const title = "DSP " + (i + 1);
     
-    app.utils.createBox( title, x + box.width + lineWidth, y + (smallBox.height + verticalSpacing) * i + marginTop, smallBox.width, smallBox.height );
+    app.flow.createBox( title, x + box.width + lineWidth, y + (smallBox.height + verticalSpacing) * i + marginTop, smallBox.width, smallBox.height );
     app.utils.animateLineOnce( title, x + box.width, textYPosition, x + box.width + lineWidth, textYPosition, 0.05);
   }
   
@@ -209,9 +234,14 @@ app.drawAuctionFlow = () => {
     const boxYPosition = topHeight + (lineHeight * i) + lineHeight * (i + 1);
     const title = mediumBoxes[i];
     
-    app.utils.createBox(title, x, boxYPosition, mediumBox.width, mediumBox.height);
+    app.flow.createBox(title, x, boxYPosition, mediumBox.width, mediumBox.height);
     app.utils.animateLineOnce( title, textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i, 0.06, 'down');
   }
+}
+
+app.flow.createBox = (title, x, y, width, height) => {
+  rect(x, y, width, height);
+  text(title, x + width / 2, y + height / 2);
 }
 
 app.utils.animateLine = (startX, startY, endX, endY, speed = 0.01, direction = 'right') => {
@@ -257,10 +287,30 @@ app.utils.animateLineOnce = ( func, startX, startY, endX, endY, speed = 0.01, di
     app.animated[func]();
 }
 
-app.utils.createBox = (title, x, y, width, height) => {
-  rect(x, y, width, height);
-  text(title, x + width / 2, y + height / 2);
+app.utils.requestInterval = (fn, delay) => {
+  let start = performance.now();
+  let handle = { id: null };
+
+  function loop() {
+    let current = performance.now();
+    let elapsed = current - start;
+
+    if (elapsed >= delay) {
+      fn(); // Execute the callback function
+      start = performance.now(); // Reset start time
+    }
+
+    handle.id = requestAnimationFrame(loop); // Continue the loop
+  }
+
+  handle.id = requestAnimationFrame(loop); // Start the loop
+  return handle;
 }
+
+app.utils.clearRequestInterval = (handle) => {
+  cancelAnimationFrame(handle.id);
+}
+
 
 function preload() {
   // Load the icon image in the preload() function to ensure it is loaded before use
@@ -277,9 +327,9 @@ function setup() {
   canvas.parent('ps-canvas');
   background(245);
 
+  app.init();
   app.drawTimelineKiLine();
   app.drawTimeline(config.timeline);
-  app.handlePlayPauseButttons();
 
   // On first render.
   app.renderUserIcon();
@@ -288,5 +338,5 @@ function setup() {
 
 function draw() {
   textSize(12);
-  app.drawAuctionFlow();
+  app.flow.drawAuction();
 }
