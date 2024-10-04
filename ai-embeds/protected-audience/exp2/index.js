@@ -48,11 +48,11 @@ const app = {
       lineHeight: 50,
     },
     auctions: [],
-    internvals: {},
+    intervals: {},
   },
 }
 
-app.init = () => {
+app.init = async () => {
   app.handlePlayPauseButttons();
 
   config.timeline.circles.forEach((circle, index) => {
@@ -62,7 +62,7 @@ app.init = () => {
   });
 
   app.flow.setupAuctions();
-  app.flow.drawAuction( 0 );
+  await app.flow.drawAuction( 0 );
 }
 
 app.play = () => {
@@ -196,41 +196,81 @@ app.renderUserIcon = () => {
   image(userIcon, circlePosition.x - user.width/2, circlePosition.y - user.height/2, user.width, user.height);
 }
 
-app.flow.drawAuction = ( index ) => {
+app.flow.drawAuction = async (index) => {
   textAlign(CENTER, CENTER);
 
   const auction = app.flow.auctions[index];
 
-  console.log( auction );
-
-  if ( auction === undefined ) {
+  if (auction === undefined) {
     return;
   }
 
+  // Helper function to draw lines and boxes
+  const drawLineAndBox = async (item, direction = 'right') => {
+    await app.flow.progressLine(item.line.x1, item.line.y1, item.line.x2, item.line.y2, direction);
+    app.flow.createBox(item.name, item.box.x, item.box.y, item.box.width, item.box.height);
+  };
+
   // Draw SSP box and line
-  // app.flow.createBox( auction.ssp.name, auction.ssp.box.x, auction.ssp.box.y, auction.ssp.box.width, auction.ssp.box.height );
-  app.flow.progressLine( auction.ssp.line.x1, auction.ssp.line.y1, auction.ssp.line.x2, auction.ssp.line.y2);
+  await drawLineAndBox(auction.ssp);
+
+  // Sequentially draw DSP boxes and lines
+  const dsp = auction.dsp;
+  for (const dspItem of dsp) {
+    await drawLineAndBox(dspItem);  // Sequential execution for DSP items
+  }
+
+  // Sequentially draw bottom flow boxes and lines
+  const bottomFlow = auction.bottomFlow;
+  for (const flowItem of bottomFlow) {
+    await drawLineAndBox(flowItem, 'down');  // Sequential execution for bottom flow
+  }
 };
 
-app.flow.progressLine = ( x1, y1, x2, y2, direction = 'right' ) => {
-  const width = app.flow.config.lineWidth;
+app.flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
+  const arrowSize = 10;
+  const width = app.flow.config.lineWidth - arrowSize;
+  const height = app.flow.config.lineHeight - arrowSize;
   const incrementBy = 1;
-  const size = 10;
 
-  let _x2 = x1;
+  let _x2 = x1; // For horizontal direction
+  let _y2 = y1; // For vertical direction
 
-  app.flow.internvals['progressline'] = setInterval( () => {
-    _x2 = _x2 + incrementBy;
+  return new Promise((resolve) => {
+    app.flow.intervals['progressline'] = setInterval(() => {
+      // Check the direction and adjust the respective coordinate
+      if (direction === 'right') {
+        _x2 = _x2 + incrementBy;
 
-    if ( (_x2 - x1) > width ) {
-      clearInterval( app.flow.internvals['progressline'] );
-    }
+        // Check if the line has reached the target length for horizontal direction
+        if ((_x2 - x1) > width) {
+          clearInterval(app.flow.intervals['progressline']);
+          resolve(); // Resolve the promise once the interval is cleared
+        }
 
-    line( x1, y1, _x2, y2);
-    app.utils.drawArrow( size, _x2 - incrementBy, y1, 'right', true );
-    app.utils.drawArrow( size, _x2, y1  );
-    // image(arrowRightIcon, x1 + 85, y1 - 13, 25, 25);
-  }, 10 );
+        // Draw the progressing line horizontally
+        line(x1, y1, _x2, y2);
+
+        // Draw the arrow in the correct direction
+        app.utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
+
+      } else if (direction === 'down') {
+        _y2 = _y2 + incrementBy;
+
+        // Check if the line has reached the target length for vertical direction
+        if ((_y2 - y1) > height) {
+          clearInterval(app.flow.intervals['progressline']);
+          resolve(); // Resolve the promise once the interval is cleared
+        }
+
+        // Draw the progressing line vertically
+        line(x1, y1, x2, _y2);
+
+        // Draw the arrow in the correct direction
+        app.utils.drawArrow(arrowSize, x1, _y2, direction); // Draw new arrow
+      }
+    }, 10);
+  });
 }
 
 app.flow.setupAuctions = () => {
@@ -336,6 +376,7 @@ app.flow.setupAuction = ( index ) => {
 }
 
 app.flow.createBox = (title, x, y, width, height) => {
+  textAlign(CENTER, CENTER);
   rect(x, y, width, height);
   text(title, x + width / 2, y + height / 2);
 }
@@ -407,17 +448,32 @@ app.utils.clearRequestInterval = (handle) => {
   cancelAnimationFrame(handle.id);
 }
 
-app.utils.drawArrow = (size, x, y, direction = 'right', hide = false ) => {
-  app.utils.triangle( size + 1, x - 1, y, 'right', config.canvas.background ); // Clear previous one.
-  app.utils.triangle( size, x, y );
+app.utils.drawArrow = (size, x, y, direction = 'right' ) => {
+  // Clear previous one.
+  app.utils.triangle( 
+    size + 1, 
+    direction === 'right' ? x - 1 : x, 
+    direction === 'right' ? y : y - 1, 
+    direction, 
+    config.canvas.background 
+  );
+
+  app.utils.triangle( size, x, y , direction, 'black' );
 }
 
-app.utils.triangle = (size, x, y, direction = 'right', color = 'black' ) => {
+app.utils.triangle = (size, x, y, direction = 'right', color = 'black') => {
   const height = (sqrt(3) / 2) * size; // Height of an equilateral triangle
-  let angle = radians(90);
-  
+  let angle;
+
+  // Determine the angle of rotation based on the direction
+  if (direction === 'right') {
+    angle = radians(90); // Pointing right (default)
+  } else if (direction === 'down') {
+    angle = radians(180); // Pointing down
+  }
+
   // Coordinates of the triangle's vertices
-  const leftSpacing = 6;
+  const spacing = 6;
   const x1 = 0;
   const y1 = -height / 2; // Top vertex
   const x2 = -size / 2;
@@ -429,9 +485,13 @@ app.utils.triangle = (size, x, y, direction = 'right', color = 'black' ) => {
   push();
 
   // Move the origin to the triangle's center
-  translate(x + leftSpacing, y);
+  if ( direction === 'right' ) {
+    translate(x + spacing, y);
+  } else {
+    translate(x, y + spacing);
+  }
 
-  // Rotate the triangle
+  // Rotate the triangle based on the angle
   rotate(angle);
   noStroke();
 
@@ -459,17 +519,15 @@ function setup() {
   const canvas = createCanvas(config.canvas.width, circleVerticalSpace * config.timeline.circles.length);
   canvas.parent('ps-canvas');
   background(245);
+  textSize(12);
 
-  app.init();
+  ( async () => {
+    await app.init();
+  } )();
   app.drawTimelineKiLine();
   app.drawTimeline(config.timeline);
 
   // On first render.
   app.renderUserIcon();
   // app.play();
-}
-
-function draw() {
-  textSize(12);
-  // app.flow.drawAuction();
 }
