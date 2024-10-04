@@ -1,6 +1,7 @@
 const config = {
   canvas: {
     width: 700,
+    background: 245,
   },
   timeline: {
     position: {x: 160, y: 0},
@@ -15,8 +16,8 @@ const config = {
     },
     circles: [
       { type: 'advertiser', website: 'adv1.com', datetime: '2023-10-01 10:00' },
-      { type: 'advertiser', website: 'adv2.com', datetime: '2023-10-01 11:00' },
       { type: 'publisher', website: 'pub1.com', datetime: '2023-10-01 12:00' },
+      { type: 'advertiser', website: 'adv2.com', datetime: '2023-10-01 11:00' },
       { type: 'advertiser', website: 'adv3.com', datetime: '2023-10-01 13:00' },
       { type: 'advertiser', website: 'adv5.com', datetime: '2023-10-01 13:02' },
       { type: 'publisher', website: 'pub2.com', datetime: '2023-10-01 14:00' },
@@ -36,7 +37,7 @@ const app = {
     timelineVerticleLine: undefined,
     ssp: undefined
   },
-  canDrawAuctionFlow: false,
+  canDrawAuctionFlow: true,
   utils: {},
   flow: {
     config: {
@@ -45,7 +46,9 @@ const app = {
       mediumBox: { width: 125, height: 50 },
       lineWidth: 100,
       lineHeight: 50,
-    }
+    },
+    auctions: [],
+    internvals: {},
   },
 }
 
@@ -57,6 +60,9 @@ app.init = () => {
       app.circlePublisherIndices.push(index);
     }
   });
+
+  app.flow.setupAuctions();
+  app.flow.drawAuction( 0 );
 }
 
 app.play = () => {
@@ -77,11 +83,12 @@ app.setupInterval = () => {
   app.internval = app.utils.requestInterval( () => {
     if ( ! app.isPaused ) {
       app.renderUserIcon();
-      if ( app.circlePublisherIndices.includes(app.currentIndex) ) {
-        app.canDrawAuctionFlow = true;
-        app.utils.clearRequestInterval( app.internval );
-        return;
-      }
+      // if ( app.circlePublisherIndices.includes(app.currentIndex) ) {
+      //   app.canDrawAuctionFlow = true;
+      //   app.utils.clearRequestInterval( app.internval );
+      //   return;
+      // }
+
       app.currentIndex++;
     }
   }, config.timeline.stepDelay);
@@ -189,12 +196,56 @@ app.renderUserIcon = () => {
   image(userIcon, circlePosition.x - user.width/2, circlePosition.y - user.height/2, user.width, user.height);
 }
 
-app.flow.drawAuction = () => {
+app.flow.drawAuction = ( index ) => {
+  textAlign(CENTER, CENTER);
+
+  const auction = app.flow.auctions[index];
+
+  console.log( auction );
+
+  if ( auction === undefined ) {
+    return;
+  }
+
+  // Draw SSP box and line
+  // app.flow.createBox( auction.ssp.name, auction.ssp.box.x, auction.ssp.box.y, auction.ssp.box.width, auction.ssp.box.height );
+  app.flow.progressLine( auction.ssp.line.x1, auction.ssp.line.y1, auction.ssp.line.x2, auction.ssp.line.y2);
+};
+
+app.flow.progressLine = ( x1, y1, x2, y2, direction = 'right' ) => {
+  const width = app.flow.config.lineWidth;
+  const incrementBy = 1;
+  const size = 10;
+
+  let _x2 = x1;
+
+  app.flow.internvals['progressline'] = setInterval( () => {
+    _x2 = _x2 + incrementBy;
+
+    if ( (_x2 - x1) > width ) {
+      clearInterval( app.flow.internvals['progressline'] );
+    }
+
+    line( x1, y1, _x2, y2);
+    app.utils.drawArrow( size, _x2 - incrementBy, y1, 'right', true );
+    app.utils.drawArrow( size, _x2, y1  );
+    // image(arrowRightIcon, x1 + 85, y1 - 13, 25, 25);
+  }, 10 );
+}
+
+app.flow.setupAuctions = () => {
+  config.timeline.circles.forEach((circle, index) => {
+    app.flow.setupAuction( index );
+  });
+}
+
+app.flow.setupAuction = ( index ) => {
   const { position, circleProps } = config.timeline;
   const { diameter, verticalSpacing } = circleProps;
-  const currentCircle = config.timeline.circles[app.currentIndex];
-  const circleNumber = app.currentIndex + 1;
+  const currentCircle = config.timeline.circles[index];
+  const circleNumber = index + 1;
   const { box, smallBox, mediumBox, lineWidth, lineHeight } = app.flow.config;
+  const auction = {};
 
   if ( currentCircle.type !== 'publisher' || ! app.canDrawAuctionFlow ) {
     return;
@@ -207,25 +258,56 @@ app.flow.drawAuction = () => {
   const circleHeights = diameter * circleNumber - circleRadius;
   const circleVerticalHeights = verticalSpacing * (circleNumber - 1) - verticalSpacing / 2;
   const y = circleHeights + circleVerticalHeights;
-  
-  textAlign(CENTER, CENTER);
+
+  auction.ssp = {
+    name: 'SSP',
+    box: { x, y, width: box.width, height: box.height },
+    line: {
+      x1: x - spaceFromTimeline + diameter / 2,
+      y1: y + box.height / 2,
+      x2: x,
+      y2: y + box.height / 2,
+      speed: 0.6
+    }
+  }
   
   // Draw SSP block (rectangle 1)
-  app.flow.createBox( 'SSP', x, y, box.width, box.height );
-  app.utils.animateLineOnce( 'ssp', x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2, 0.06);
+  // app.flow.createBox( 'SSP', x, y, box.width, box.height );
+  // app.utils.animateLineOnce( 'ssp', x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2, 0.06);
   
   // Draw DSP blocks
+
+  auction.dsp = [];
+
   for (let i = 0; i <= 1; i++) {
     const marginTop = -10;
     const verticalSpacing = 20;
     const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
     const title = "DSP " + (i + 1);
-    
-    app.flow.createBox( title, x + box.width + lineWidth, y + (smallBox.height + verticalSpacing) * i + marginTop, smallBox.width, smallBox.height );
-    app.utils.animateLineOnce( title, x + box.width, textYPosition, x + box.width + lineWidth, textYPosition, 0.05);
+
+    auction.dsp.push( {
+      name: title,
+      box: { 
+        x: x + box.width + lineWidth, 
+        y: y + (smallBox.height + verticalSpacing) * i + marginTop,
+        width: smallBox.width, 
+        height: smallBox.height
+      },
+      line: {
+        x1: x + box.width, 
+        y1: textYPosition,
+        x2: x + box.width + lineWidth,
+        y2: textYPosition,
+        speed: 0.05
+      }
+    } );
+    // app.flow.createBox( title, x + box.width + lineWidth, y + (smallBox.height + verticalSpacing) * i + marginTop, smallBox.width, smallBox.height );
+    // app.utils.animateLineOnce( title, x + box.width, textYPosition, x + box.width + lineWidth, textYPosition, 0.05);
   }
   
   const mediumBoxes = ['runAuction()', 'Show Winning Ad'];
+
+  auction.bottomFlow = [];
   
   // Draw Medium blocks
   for (let i = 0; i < mediumBoxes.length; i++) {
@@ -233,10 +315,24 @@ app.flow.drawAuction = () => {
     const textXPosition = x + mediumBox.width / 2;
     const boxYPosition = topHeight + (lineHeight * i) + lineHeight * (i + 1);
     const title = mediumBoxes[i];
-    
-    app.flow.createBox(title, x, boxYPosition, mediumBox.width, mediumBox.height);
-    app.utils.animateLineOnce( title, textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i, 0.06, 'down');
+
+    auction.bottomFlow.push( {
+      name: title,
+      box: { x, y: boxYPosition, width: mediumBox.width, height: mediumBox.height },
+      line: {
+        x1: textXPosition, 
+        y1: boxYPosition - lineHeight,
+        x2: textXPosition, 
+        y2: boxYPosition + lineHeight * i - mediumBox.height * i,
+        speed: 0.06,
+        direction: 'down'
+      }
+    } );
+    // app.flow.createBox(title, x, boxYPosition, mediumBox.width, mediumBox.height);
+    // app.utils.animateLineOnce( title, textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i, 0.06, 'down');
   }
+
+  app.flow.auctions.push(auction);
 }
 
 app.flow.createBox = (title, x, y, width, height) => {
@@ -311,6 +407,46 @@ app.utils.clearRequestInterval = (handle) => {
   cancelAnimationFrame(handle.id);
 }
 
+app.utils.drawArrow = (size, x, y, direction = 'right', hide = false ) => {
+  const height = (sqrt(3) / 2) * size; // Height of an equilateral triangle
+  let angle = radians(90);
+  
+  // Coordinates of the triangle's vertices
+  const x1 = 0;
+  const y1 = -height / 2; // Top vertex
+  const x2 = -size / 2;
+  const y2 = height / 2; // Bottom-left vertex
+  const x3 = size / 2;
+  const y3 = height / 2; // Bottom-right vertex
+
+  // Save the current state of the canvas
+  push();
+
+  // Move the origin to the triangle's center
+  if ( hide ) {
+    translate(x, y - 5);
+  } else {
+    translate(x, y);
+  }
+
+  // Rotate the triangle
+  rotate(angle);
+  noStroke();
+
+  if (hide) {
+    fill(config.canvas.background);
+    rect(x1, y1, size, size);
+  } else {
+    fill('black');
+  }
+
+  // Draw the triangle using the calculated vertices
+  triangle(x1, y1, x2, y2, x3, y3);
+
+  // Restore the previous state of the canvas
+  pop();
+}
+
 
 function preload() {
   // Load the icon image in the preload() function to ensure it is loaded before use
@@ -338,5 +474,5 @@ function setup() {
 
 function draw() {
   textSize(12);
-  app.flow.drawAuction();
+  // app.flow.drawAuction();
 }
