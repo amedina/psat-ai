@@ -408,10 +408,16 @@ app.utils.clearRequestInterval = (handle) => {
 }
 
 app.utils.drawArrow = (size, x, y, direction = 'right', hide = false ) => {
+  app.utils.triangle( size + 1, x - 1, y, 'right', config.canvas.background ); // Clear previous one.
+  app.utils.triangle( size, x, y );
+}
+
+app.utils.triangle = (size, x, y, direction = 'right', color = 'black' ) => {
   const height = (sqrt(3) / 2) * size; // Height of an equilateral triangle
   let angle = radians(90);
   
   // Coordinates of the triangle's vertices
+  const leftSpacing = 6;
   const x1 = 0;
   const y1 = -height / 2; // Top vertex
   const x2 = -size / 2;
@@ -423,22 +429,13 @@ app.utils.drawArrow = (size, x, y, direction = 'right', hide = false ) => {
   push();
 
   // Move the origin to the triangle's center
-  if ( hide ) {
-    translate(x, y - 5);
-  } else {
-    translate(x, y);
-  }
+  translate(x + leftSpacing, y);
 
   // Rotate the triangle
   rotate(angle);
   noStroke();
 
-  if (hide) {
-    fill(config.canvas.background);
-    rect(x1, y1, size, size);
-  } else {
-    fill('black');
-  }
+  fill(color);
 
   // Draw the triangle using the calculated vertices
   triangle(x1, y1, x2, y2, x3, y3);
@@ -469,7 +466,7 @@ function setup() {
 
   // On first render.
   app.renderUserIcon();
-  app.play();
+  // app.play();
 }
 
 function draw() {
