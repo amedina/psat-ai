@@ -40,6 +40,21 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
                 // Draw the arrow in the correct direction
                 utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
 
+            } else if (direction === 'left') {
+                _x2 = _x2 + incrementBy;
+
+                // Check if the line has reached the target length for horizontal direction
+                if ((_x2 - x1) > width) {
+                    clearInterval(app.flow.intervals['progressline']);
+                    resolve(); // Resolve the promise once the interval is cleared
+                }
+
+                // Draw the progressing line horizontally
+                app.p.line(x1, y1, _x2, y2);
+
+                // Draw the arrow in the correct direction
+                utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
+
             } else if (direction === 'down') {
                 _y2 = _y2 + incrementBy;
 

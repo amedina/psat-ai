@@ -72,6 +72,18 @@ auction.setUp = (index) => {
                 direction: 'right'
             }
         });
+
+        _auction.dsp.push({
+            name: title,
+            line: {
+                x1: x + box.width,
+                y1: textYPosition,
+                x2: x + box.width + lineWidth,
+                y2: textYPosition,
+                speed: 0.05,
+                direction: 'left'
+            }
+        });
     }
 
     const mediumBoxes = ['runAuction()', 'Show Winning Ad'];
@@ -114,7 +126,10 @@ auction.draw = async (index) => {
     // Helper function to draw lines and boxes
     const drawLineAndBox = async (item) => {
         await flow.progressLine(item.line.x1, item.line.y1, item.line.x2, item.line.y2, item.line.direction);
-        flow.createBox(item.name, item.box.x, item.box.y, item.box.width, item.box.height);
+
+        if ( item.box ) {
+            flow.createBox(item.name, item.box.x, item.box.y, item.box.width, item.box.height);
+        }
     };
 
     // Draw SSP box and line

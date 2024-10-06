@@ -6,50 +6,6 @@ import app from './../app.js';
 
 const utils = {};
 
-utils.animateLine = (startX, startY, endX, endY, speed = 0.01, direction = 'right') => {
-    let currentX = startX;
-    let currentY = startY;
-    let done = false;
-    const p = app.p;
-
-    return function () {
-        if (done) return; // Stop animation when the line is fully drawn
-
-        // Calculate progress for x and y
-        let progressX = (endX - currentX) * speed;
-        let progressY = (endY - currentY) * speed;
-
-        // Draw the incremental line
-        p.line(startX, startY, currentX, currentY);
-
-        // Update currentX and currentY
-        currentX += progressX;
-        currentY += progressY;
-
-        // Check if the line has reached the destination
-        if (dist(currentX, currentY, endX, endY) < 1) {
-            // Draw the final line and mark it as done
-            p.line(startX, startY, endX, endY);
-
-            if (direction === 'down') {
-                p.image(p.arrowDownIcon, startX - 12.5, startY + 35, 25, 25);
-            } else {
-                p.image(p.arrowRightIcon, startX + 85, startY - 13, 25, 25);
-            }
-            done = true;
-        }
-    };
-}
-
-utils.animateLineOnce = (func, startX, startY, endX, endY, speed = 0.01, direction = 'right') => {
-    // Draw the vertical timeline line
-    if (!app.animated[func]) {
-        app.animated[func] = utils.animateLine(startX, startY, endX, endY, speed, direction);
-    }
-
-    app.animated[func]();
-}
-
 utils.requestInterval = (fn, delay) => {
     let start = performance.now();
     let handle = { id: null };
