@@ -13,7 +13,7 @@ timeline.init = () => {
         }
     });
 
-    app.timeline.drawTimelineKiLine();
+    app.timeline.drawTimelineLine();
     app.timeline.drawTimeline(config.timeline);
     app.timeline.renderUserIcon(); // On first render.
 }
@@ -29,8 +29,6 @@ timeline.drawTimeline = ({ position, circleProps, circles }) => {
     // Draw circles and text at the timeline position
     circles.forEach((circleItem, index) => {
         const yPosition = verticalSpacing + circleVerticalSpace * index;
-
-        console.log(app.timeline.circlePositions, 'app.timeline.circlePositions');
 
         app.timeline.circlePositions.push({ x: position.x, y: yPosition });
         timeline.drawCircle(index);
@@ -92,7 +90,7 @@ timeline.drawSmallCircles = (index) => {
     }
 };
 
-timeline.drawTimelineKiLine = () => {
+timeline.drawTimelineLine = () => {
     const position = config.timeline.position;
     const { diameter, verticalSpacing } = config.timeline.circleProps;
     const circleVerticalSpace = verticalSpacing + diameter;

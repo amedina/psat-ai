@@ -15,7 +15,7 @@ import timeline from './modules/timeline.js';
 
 app.init = async (p) => {
   app.p = p;
-  app.auctions = { ...app.auctions, ...auctions };
+  app.auction = { ...app.auction, ...auctions };
   app.flow = { ...app.flow, ...flow };
   app.utils = { ...app.utils, ...utils };
   app.timeline = { ...app.timeline, ...timeline };
@@ -24,8 +24,8 @@ app.init = async (p) => {
 
   timeline.init();
 
-  app.auctions.setupAuctions();
-  await app.auctions.draw(0);
+  app.auction.setupAuctions();
+  await app.auction.draw(0);
 }
 
 app.play = () => {

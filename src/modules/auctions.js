@@ -5,21 +5,21 @@ import flow from './flow';
 import app from '../app';
 import config from '../config';
 
-const auctions = {};
+const auction = {};
 
-auctions.setupAuctions = () => {
+auction.setupAuctions = () => {
     config.timeline.circles.forEach((circle, index) => {
-        auctions.setUp(index);
+        auction.setUp(index);
     });
 }
 
-auctions.setUp = (index) => {
+auction.setUp = (index) => {
     const { position, circleProps } = config.timeline;
     const { diameter, verticalSpacing } = circleProps;
     const currentCircle = config.timeline.circles[index];
     const circleNumber = index + 1;
-    const { box, smallBox, mediumBox, lineWidth, lineHeight } = flow.config;
-    const auction = {};
+    const { box, smallBox, mediumBox, lineWidth, lineHeight } = app.flow.config;
+    const _auction = {};
 
     if (currentCircle.type !== 'publisher' || !app.canDrawAuctionFlow) {
         return;
@@ -33,7 +33,7 @@ auctions.setUp = (index) => {
     const circleVerticalHeights = verticalSpacing * (circleNumber - 1) - verticalSpacing / 2;
     const y = circleHeights + circleVerticalHeights;
 
-    auction.ssp = {
+    _auction.ssp = {
         name: 'SSP',
         box: { x, y, width: box.width, height: box.height },
         line: {
@@ -47,7 +47,7 @@ auctions.setUp = (index) => {
 
     // Draw DSP blocks
 
-    auction.dsp = [];
+    _auction.dsp = [];
 
     for (let i = 0; i <= 1; i++) {
         const marginTop = -10;
@@ -55,7 +55,7 @@ auctions.setUp = (index) => {
         const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
         const title = "DSP " + (i + 1);
 
-        auction.dsp.push({
+        _auction.dsp.push({
             name: title,
             box: {
                 x: x + box.width + lineWidth,
@@ -75,7 +75,7 @@ auctions.setUp = (index) => {
 
     const mediumBoxes = ['runAuction()', 'Show Winning Ad'];
 
-    auction.bottomFlow = [];
+    _auction.bottomFlow = [];
 
     // Draw Medium blocks
     for (let i = 0; i < mediumBoxes.length; i++) {
@@ -84,7 +84,7 @@ auctions.setUp = (index) => {
         const boxYPosition = topHeight + (lineHeight * i) + lineHeight * (i + 1);
         const title = mediumBoxes[i];
 
-        auction.bottomFlow.push({
+        _auction.bottomFlow.push({
             name: title,
             box: { x, y: boxYPosition, width: mediumBox.width, height: mediumBox.height },
             line: {
@@ -98,15 +98,15 @@ auctions.setUp = (index) => {
         });
     }
 
-    flow.auctions.push(auction);
+    app.auction.auctions.push(_auction);
 }
 
-auctions.draw = async (index) => {
+auction.draw = async (index) => {
     app.p.textAlign(app.p.CENTER, app.p.CENTER);
 
-    const auction = flow.auctions[index];
+    const _auction = app.auction.auctions[index];
 
-    if (auction === undefined) {
+    if (_auction === undefined) {
         return;
     }
 
@@ -117,19 +117,19 @@ auctions.draw = async (index) => {
     };
 
     // Draw SSP box and line
-    await drawLineAndBox(auction.ssp);
+    await drawLineAndBox(_auction.ssp);
 
     // Sequentially draw DSP boxes and lines
-    const dsp = auction.dsp;
+    const dsp = _auction.dsp;
     for (const dspItem of dsp) {
         await drawLineAndBox(dspItem);  // Sequential execution for DSP items
     }
 
     // Sequentially draw bottom flow boxes and lines
-    const bottomFlow = auction.bottomFlow;
+    const bottomFlow = _auction.bottomFlow;
     for (const flowItem of bottomFlow) {
         await drawLineAndBox(flowItem, 'down');  // Sequential execution for bottom flow
     }
 };
 
-export default auctions;
+export default auction;
