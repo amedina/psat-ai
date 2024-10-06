@@ -10,13 +10,6 @@ const app = {
     auctions: [],
   },
   flow: {
-    config: {
-      box: { width: 125, height: 100 },
-      smallBox: { width: 80, height: 50 },
-      mediumBox: { width: 125, height: 50 },
-      lineWidth: 100,
-      lineHeight: 50,
-    },
     intervals: {},
   },
   utils: {},

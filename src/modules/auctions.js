@@ -18,7 +18,7 @@ auction.setUp = (index) => {
     const { diameter, verticalSpacing } = circleProps;
     const currentCircle = config.timeline.circles[index];
     const circleNumber = index + 1;
-    const { box, smallBox, mediumBox, lineWidth, lineHeight } = app.flow.config;
+    const { box, smallBox, mediumBox, lineWidth, lineHeight } = config.flow;
     const _auction = {};
 
     if (currentCircle.type !== 'publisher' || !app.canDrawAuctionFlow) {

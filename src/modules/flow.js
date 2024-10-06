@@ -3,6 +3,7 @@
  */
 import utils from './utils.js';
 import app from '../app.js';
+import config from '../config.js';
 
 const flow = {};
 
@@ -14,8 +15,8 @@ flow.createBox = (title, x, y, width, height) => {
 
 flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
     const arrowSize = 10;
-    const width = app.flow.config.lineWidth - arrowSize;
-    const height = app.flow.config.lineHeight - arrowSize;
+    const width = config.flow.lineWidth - arrowSize;
+    const height = config.flow.lineHeight - arrowSize;
     const incrementBy = 1;
 
     let _x2 = x1; // For horizontal direction

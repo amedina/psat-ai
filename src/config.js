@@ -25,6 +25,13 @@ const config = {
         { type: 'advertiser', website: 'adv7.com', datetime: '2023-10-01 15:00' },
       ],
     },
+    flow: {
+      box: { width: 125, height: 100 },
+      smallBox: { width: 80, height: 50 },
+      mediumBox: { width: 125, height: 50 },
+      lineWidth: 100,
+      lineHeight: 50,
+    }
   };
 
 export default config;
