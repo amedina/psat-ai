@@ -33,6 +33,7 @@ auction.setUp = (index) => {
     const circleVerticalHeights = verticalSpacing * (circleNumber - 1) - verticalSpacing / 2;
     const y = circleHeights + circleVerticalHeights;
 
+    // Setup DSP blocks
     _auction.ssp = {
         name: 'SSP',
         box: { x, y, width: box.width, height: box.height },
@@ -45,8 +46,7 @@ auction.setUp = (index) => {
         }
     };
 
-    // Draw DSP blocks
-
+    // Setup DSP blocks
     _auction.dsp = [];
 
     for (let i = 0; i <= 1; i++) {
@@ -68,7 +68,8 @@ auction.setUp = (index) => {
                 y1: textYPosition,
                 x2: x + box.width + lineWidth,
                 y2: textYPosition,
-                speed: 0.05
+                speed: 0.05,
+                direction: 'right'
             }
         });
     }
@@ -77,7 +78,7 @@ auction.setUp = (index) => {
 
     _auction.bottomFlow = [];
 
-    // Draw Medium blocks
+    // Setup bottom blocks
     for (let i = 0; i < mediumBoxes.length; i++) {
         const topHeight = y + box.height;
         const textXPosition = x + mediumBox.width / 2;
@@ -111,8 +112,8 @@ auction.draw = async (index) => {
     }
 
     // Helper function to draw lines and boxes
-    const drawLineAndBox = async (item, direction = 'right') => {
-        await flow.progressLine(item.line.x1, item.line.y1, item.line.x2, item.line.y2, direction);
+    const drawLineAndBox = async (item) => {
+        await flow.progressLine(item.line.x1, item.line.y1, item.line.x2, item.line.y2, item.line.direction);
         flow.createBox(item.name, item.box.x, item.box.y, item.box.width, item.box.height);
     };
 
@@ -128,7 +129,7 @@ auction.draw = async (index) => {
     // Sequentially draw bottom flow boxes and lines
     const bottomFlow = _auction.bottomFlow;
     for (const flowItem of bottomFlow) {
-        await drawLineAndBox(flowItem, 'down');  // Sequential execution for bottom flow
+        await drawLineAndBox(flowItem);  // Sequential execution for bottom flow
     }
 };
 

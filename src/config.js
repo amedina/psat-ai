@@ -16,8 +16,8 @@ const config = {
       },
       circles: [
         { type: 'advertiser', website: 'adv1.com', datetime: '2023-10-01 10:00' },
-        { type: 'publisher', website: 'pub1.com', datetime: '2023-10-01 12:00' },
         { type: 'advertiser', website: 'adv2.com', datetime: '2023-10-01 11:00' },
+        { type: 'publisher', website: 'pub1.com', datetime: '2023-10-01 12:00' },
         { type: 'advertiser', website: 'adv3.com', datetime: '2023-10-01 13:00' },
         { type: 'advertiser', website: 'adv5.com', datetime: '2023-10-01 13:02' },
         { type: 'publisher', website: 'pub2.com', datetime: '2023-10-01 14:00' },
