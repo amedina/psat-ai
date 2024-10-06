@@ -68,28 +68,28 @@ app.init = async () => {
 app.play = () => {
   app.playButton.classList.add('hidden');
   app.pauseButton.classList.remove('hidden');
-  app.isPaused = false;
+  app.timeline.isPaused = false;
   app.setupInterval();
 }
 
 app.pause = () => {
   app.pauseButton.classList.add('hidden');
   app.playButton.classList.remove('hidden');
-  app.isPaused = true;
-  app.utils.clearRequestInterval(app.internval);
+  app.timeline.isPaused = true;
+  app.utils.clearRequestInterval(app.timeline.internval);
 }
 
 app.setupInterval = () => {
-  app.internval = app.utils.requestInterval( () => {
-    if ( ! app.isPaused ) {
+  app.timeline.internval = app.utils.requestInterval( () => {
+    if ( ! app.timeline.isPaused ) {
       app.renderUserIcon();
-      // if ( app.circlePublisherIndices.includes(app.currentIndex) ) {
+      // if ( app.circlePublisherIndices.includes(app.timeline.currentIndex) ) {
       //   app.canDrawAuctionFlow = true;
-      //   app.utils.clearRequestInterval( app.internval );
+      //   app.utils.clearRequestInterval( app.timeline.internval );
       //   return;
       // }
 
-      app.currentIndex++;
+      app.timeline.currentIndex++;
     }
   }, config.timeline.stepDelay);
 }
@@ -113,7 +113,7 @@ app.drawTimeline = ({ position, circleProps, circles }) => {
   circles.forEach((circleItem, index) => {
     const yPosition = verticalSpacing + circleVerticalSpace * index;
 
-    app.circlePositions.push({ x: position.x, y: yPosition });
+    app.timeline.circlePositions.push({ x: position.x, y: yPosition });
     app.drawCircle( index );
     // app.drawSmallCircles( index );
     
@@ -126,14 +126,14 @@ app.drawTimeline = ({ position, circleProps, circles }) => {
 }
 
 app.drawCircle = ( index ) => {
-  const position = app.circlePositions[index];
+  const position = app.timeline.circlePositions[index];
   const { diameter } = config.timeline.circleProps;
 
   circle(position.x, position.y, diameter);
 }
 
 app.drawSmallCircles = (index) => {
-  const position = app.circlePositions[index];
+  const position = app.timeline.circlePositions[index];
   const { diameter } = config.timeline.circleProps;
   const smallCircleDiameter = diameter / 5;
 
@@ -181,7 +181,7 @@ app.drawTimelineKiLine = () => {
 }
 
 app.renderUserIcon = () => {
-  const circlePosition = app.circlePositions[app.currentIndex];
+  const circlePosition = app.timeline.circlePositions[app.timeline.currentIndex];
 
   if ( circlePosition === undefined ) {
     return;
@@ -189,8 +189,8 @@ app.renderUserIcon = () => {
 
   const user = config.timeline.user;
 
-  if ( app.currentIndex > 0 ) {
-    app.drawCircle( app.currentIndex - 1 );
+  if ( app.timeline.currentIndex > 0 ) {
+    app.drawCircle( app.timeline.currentIndex - 1 );
   }
 
   image(userIcon, circlePosition.x - user.width/2, circlePosition.y - user.height/2, user.width, user.height);
