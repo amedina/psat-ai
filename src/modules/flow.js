@@ -2,6 +2,7 @@
  * Internal dependencies.
  */
 import utils from './utils.js';
+import app from '../app.js';
 
 const flow = {
     config: {
@@ -13,18 +14,12 @@ const flow = {
     },
     auctions: [],
     intervals: {},
-    p: null
 };
 
-flow.setup = (p) => {
-    flow.p = p;
-}
-
 flow.createBox = (title, x, y, width, height) => {
-    const p = flow.p;
-    p.textAlign(p.CENTER, p.CENTER);
-    p.rect(x, y, width, height);
-    p.text(title, x + width / 2, y + height / 2);
+    app.p.textAlign(app.p.CENTER, app.p.CENTER);
+    app.p.rect(x, y, width, height);
+    app.p.text(title, x + width / 2, y + height / 2);
 }
 
 flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
@@ -49,7 +44,7 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
                 }
 
                 // Draw the progressing line horizontally
-                flow.p.line(x1, y1, _x2, y2);
+                app.p.line(x1, y1, _x2, y2);
 
                 // Draw the arrow in the correct direction
                 utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
@@ -64,7 +59,7 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
                 }
 
                 // Draw the progressing line vertically
-                flow.p.line(x1, y1, x2, _y2);
+                app.p.line(x1, y1, x2, _y2);
 
                 // Draw the arrow in the correct direction
                 utils.drawArrow(arrowSize, x1, _y2, direction); // Draw new arrow

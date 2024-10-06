@@ -2,18 +2,15 @@
  * Internal dependencies.
  */
 import config from './../config.js';
+import app from './../app.js';
 
 const utils = {};
-
-utils.setup = (p) => {
-    utils.p = p;
-}
 
 utils.animateLine = (startX, startY, endX, endY, speed = 0.01, direction = 'right') => {
     let currentX = startX;
     let currentY = startY;
     let done = false;
-    const p = utils.p;
+    const p = app.p;
 
     return function () {
         if (done) return; // Stop animation when the line is fully drawn
@@ -91,7 +88,7 @@ utils.drawArrow = (size, x, y, direction = 'right') => {
 }
 
 utils.triangle = (size, x, y, direction = 'right', color = 'black') => {
-    const p = utils.p;
+    const p = app.p;
     const height = (p.sqrt(3) / 2) * size; // Height of an equilateral triangle
     let angle;
 

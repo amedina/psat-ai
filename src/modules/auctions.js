@@ -1,17 +1,19 @@
 /**
  * Internal dependencies.
  */
-import flow from "./flow";
+import flow from './flow';
+import app from '../app';
+import config from '../config';
 
 const auctions = {};
 
 auctions.setupAuctions = () => {
     config.timeline.circles.forEach((circle, index) => {
-        flow.setupAuction(index);
+        auctions.setUp(index);
     });
 }
 
-auctions.setupAuction = (index) => {
+auctions.setUp = (index) => {
     const { position, circleProps } = config.timeline;
     const { diameter, verticalSpacing } = circleProps;
     const currentCircle = config.timeline.circles[index];
@@ -41,11 +43,7 @@ auctions.setupAuction = (index) => {
             y2: y + box.height / 2,
             speed: 0.6
         }
-    }
-
-    // Draw SSP block (rectangle 1)
-    // flow.createBox( 'SSP', x, y, box.width, box.height );
-    // app.utils.animateLineOnce( 'ssp', x - spaceFromTimeline + diameter / 2, y + box.height / 2, x, y + box.height / 2, 0.06);
+    };
 
     // Draw DSP blocks
 
@@ -73,8 +71,6 @@ auctions.setupAuction = (index) => {
                 speed: 0.05
             }
         });
-        // flow.createBox( title, x + box.width + lineWidth, y + (smallBox.height + verticalSpacing) * i + marginTop, smallBox.width, smallBox.height );
-        // app.utils.animateLineOnce( title, x + box.width, textYPosition, x + box.width + lineWidth, textYPosition, 0.05);
     }
 
     const mediumBoxes = ['runAuction()', 'Show Winning Ad'];
@@ -100,14 +96,12 @@ auctions.setupAuction = (index) => {
                 direction: 'down'
             }
         });
-        // flow.createBox(title, x, boxYPosition, mediumBox.width, mediumBox.height);
-        // app.utils.animateLineOnce( title, textXPosition, boxYPosition - lineHeight, textXPosition, boxYPosition + lineHeight * i - mediumBox.height * i, 0.06, 'down');
     }
 
     flow.auctions.push(auction);
 }
 
-auctions.drawAuction = async (index) => {
+auctions.draw = async (index) => {
     app.p.textAlign(app.p.CENTER, app.p.CENTER);
 
     const auction = flow.auctions[index];
