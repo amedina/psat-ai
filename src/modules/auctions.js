@@ -73,7 +73,8 @@ auction.setUp = (index) => {
                 x2: x + box.width + lineWidth,
                 y2: textYPosition,
                 speed: 0.05,
-                direction: 'right'
+                direction: 'right',
+                text: ''
             }
         });
 
@@ -85,7 +86,8 @@ auction.setUp = (index) => {
                 x2: x + box.width + lineWidth,
                 y2: textYPosition,
                 speed: 0.05,
-                direction: 'left'
+                direction: 'left',
+                text: `$${ Math.floor(Math.random() * 10) + 1 }`
             }
         });
     }
@@ -134,7 +136,7 @@ auction.draw = async (index) => {
     };
 
     const drawLine = async (item) => {
-        await flow.progressLine(item.line.x1, item.line.y1, item.line.x2, item.line.y2, item.line.direction);
+        await flow.progressLine(item.line.x1, item.line.y1, item.line.x2, item.line.y2, item.line?.direction, item.line?.text);
     }
 
     const drawBox = async (item) => {

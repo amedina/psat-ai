@@ -13,7 +13,7 @@ flow.createBox = (title, x, y, width, height) => {
     app.p.text(title, x + width / 2, y + height / 2);
 }
 
-flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
+flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '' ) => {
     const arrowSize = 10;
     const width = config.flow.lineWidth - arrowSize;
     const height = config.flow.lineHeight - arrowSize;
@@ -47,6 +47,13 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
 
                 if ((x2 - __x2) > width) {
                     clearInterval(app.flow.intervals['progressline']);
+
+                    if ( text ) {
+                        app.p.textSize(10);
+                        app.p.text( text, __x2 + width / 2, y1 + height / 2 );
+                        app.p.textSize(12);
+                    }
+
                     resolve(); // Resolve the promise once the interval is cleared
                 }
 
