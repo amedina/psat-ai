@@ -4,10 +4,15 @@
 import flow from './flow';
 import app from '../app';
 import config from '../config';
+import rippleEffect from './ripple-effect';
 
 const auction = {};
+let rippled = false
 
 auction.setupAuctions = () => {
+    rippleEffect.setUp();
+    // rippleEffect.start( 500, 200 );
+
     config.timeline.circles.forEach((circle, index) => {
         auction.setUp(index);
     });
