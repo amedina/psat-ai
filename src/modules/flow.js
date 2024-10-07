@@ -19,8 +19,9 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
     const height = config.flow.lineHeight - arrowSize;
     const incrementBy = 1;
 
-    let _x2 = x1; // For horizontal direction
+    let _x2 = x1; // For horizontal directions
     let _y2 = y1; // For vertical direction
+    let __x2 = x2;
 
     return new Promise((resolve) => {
         app.flow.intervals['progressline'] = setInterval(() => {
@@ -41,19 +42,19 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right') => {
                 utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
 
             } else if (direction === 'left') {
-                _x2 = _x2 + incrementBy;
+                __x2 = __x2 - incrementBy;
+                const margin = 10;
 
-                // Check if the line has reached the target length for horizontal direction
-                if ((_x2 - x1) > width) {
+                if ((x2 - __x2) > width) {
                     clearInterval(app.flow.intervals['progressline']);
                     resolve(); // Resolve the promise once the interval is cleared
                 }
 
-                // Draw the progressing line horizontally
-                app.p.line(x1, y1, _x2, y2);
+                // Draw the progressing line horizontally (left direction)
+                app.p.line(x2, y2 + margin, __x2, y1 + margin);
 
                 // Draw the arrow in the correct direction
-                utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
+                utils.drawArrow(arrowSize, __x2, y1 + 4, direction); // Draw new arrow
 
             } else if (direction === 'down') {
                 _y2 = _y2 + incrementBy;
