@@ -4,7 +4,7 @@ const config = {
       background: 245,
     },
     timeline: {
-      position: {x: 160, y: 0},
+      position: {x: 160, y: 50},
       circleProps: {
         diameter: 50,
         verticalSpacing: 50,

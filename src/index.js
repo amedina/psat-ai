@@ -12,6 +12,7 @@ import auctions from './modules/auctions.js';
 import flow from './modules/flow.js';
 import utils from './modules/utils.js';
 import timeline from './modules/timeline.js';
+import joinInterestGroup from './modules/join-interest-group.js';
 
 app.init = async (p) => {
   app.p = p;
@@ -19,12 +20,16 @@ app.init = async (p) => {
   app.flow = { ...app.flow, ...flow };
   app.utils = { ...app.utils, ...utils };
   app.timeline = { ...app.timeline, ...timeline };
+  app.joinInterestGroup = { ...app.joinInterestGroup, ...joinInterestGroup };
 
   app.handlePlayPauseButttons();
 
   timeline.init();
 
   app.auction.setupAuctions();
+  app.joinInterestGroup.setupJoinings();
+
+  // await app.joinInterestGroup.draw(0);
   await app.auction.draw(0);
 }
 

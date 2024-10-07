@@ -7,22 +7,20 @@ import config from '../config';
 import utils from './utils';
 import rippleEffect from './ripple-effect';
 
-const auction = {};
+const joinInterestGroup = {};
 
-auction.setupAuctions = () => {
-    rippleEffect.setUp();
-
+joinInterestGroup.setupJoinings = () => {
     config.timeline.circles.forEach((circle, index) => {
-        auction.setUp(index);
+        joinInterestGroup.setUp(index);
     });
 }
 
-auction.setUp = (index) => {
+joinInterestGroup.setUp = (index) => {
     const { position, circleProps } = config.timeline;
     const { diameter, verticalSpacing } = circleProps;
     const currentCircle = config.timeline.circles[index];
-    const { box, smallBox, mediumBox, lineWidth, lineHeight } = config.flow;
-    const _auction = {};
+    const { box, smallBox, lineWidth } = config.flow;
+    const _joining = {};
 
     // Calculate (x, y) coordinates
     const circleNumber = index + 1;
@@ -33,25 +31,26 @@ auction.setUp = (index) => {
     const circleVerticalHeights = verticalSpacing * (circleNumber - 1) - verticalSpacing / 2;
     const y = position.y / 2 + circleHeights + circleVerticalHeights;
 
-    if (currentCircle.type !== 'publisher') {
+    if (currentCircle.type !== 'advertiser') {
         return;
     }
 
     // Setup DSP blocks
-    _auction.ssp = {
-        name: 'SSP',
+    _joining.ssp = {
+        name: 'DSP Tag',
         box: { x, y, width: box.width, height: box.height },
         line: {
             x1: x - spaceFromTimeline + diameter / 2,
             y1: y + box.height / 2,
             x2: x,
             y2: y + box.height / 2,
-            speed: 0.6
+            speed: 0.6,
+            text: 'joinInterestGroup()'
         }
     };
 
     // Setup DSP blocks
-    _auction.dsp = [];
+    _joining.dsp = [];
 
     for (let i = 0; i <= 1; i++) {
         const marginTop = -10;
@@ -59,7 +58,7 @@ auction.setUp = (index) => {
         const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
         const title = "DSP " + (i + 1);
 
-        _auction.dsp.push({
+        _joining.dsp.push({
             name: title,
             box: {
                 x: x + box.width + lineWidth,
@@ -78,7 +77,7 @@ auction.setUp = (index) => {
             }
         });
 
-        _auction.dsp.push({
+        _joining.dsp.push({
             name: title,
             line: {
                 x1: x + box.width,
@@ -87,45 +86,19 @@ auction.setUp = (index) => {
                 y2: textYPosition,
                 speed: 0.05,
                 direction: 'left',
-                text: `$${ Math.floor(Math.random() * 10) + 1 }`
             }
         });
     }
 
-    const mediumBoxes = ['runAuction()', 'Show Winning Ad'];
-
-    _auction.bottomFlow = [];
-
-    // Setup bottom blocks
-    for (let i = 0; i < mediumBoxes.length; i++) {
-        const topHeight = y + box.height;
-        const textXPosition = x + mediumBox.width / 2;
-        const boxYPosition = topHeight + (lineHeight * i) + lineHeight * (i + 1);
-        const title = mediumBoxes[i];
-
-        _auction.bottomFlow.push({
-            name: title,
-            box: { x, y: boxYPosition, width: mediumBox.width, height: mediumBox.height },
-            line: {
-                x1: textXPosition,
-                y1: boxYPosition - lineHeight,
-                x2: textXPosition,
-                y2: boxYPosition + lineHeight * i - mediumBox.height * i,
-                speed: 0.06,
-                direction: 'down'
-            }
-        });
-    }
-
-    app.auction.auctions.push(_auction);
+    app.joinInterestGroup.joinings.push(_joining);
 }
 
-auction.draw = async (index) => {
+joinInterestGroup.draw = async (index) => {
     app.p.textAlign(app.p.CENTER, app.p.CENTER);
 
-    const _auction = app.auction.auctions[index];
+    const _joining = app.joinInterestGroup.joinings[index];
 
-    if (_auction === undefined) {
+    if (_joining === undefined) {
         return;
     }
 
@@ -146,16 +119,11 @@ auction.draw = async (index) => {
     }
 
     // Draw SSP box and line
-    await drawLineAndBox(_auction.ssp);
+    await drawLineAndBox(_joining.ssp);
     await utils.delay( 500 );
 
-    await rippleEffect.start( 
-        _auction.ssp.box.x + config.flow.box.width + 2, 
-        _auction.ssp.box.y + config.flow.box.height / 2
-    );
-
     // Sequentially draw DSP boxes and lines
-    const dsp = _auction.dsp;
+    const dsp = _joining.dsp;
     for (const dspItem of dsp) {
         await drawBox(dspItem);  // Sequential execution for DSP items
     }
@@ -166,13 +134,6 @@ auction.draw = async (index) => {
         await drawLine(dspItem);  // Sequential execution for DSP items
         await utils.delay( 1000 );
     }
-
-    // Sequentially draw bottom flow boxes and lines
-    const bottomFlow = _auction.bottomFlow;
-    for (const flowItem of bottomFlow) {
-        await drawLineAndBox(flowItem);  // Sequential execution for bottom flow
-        await utils.delay( 1000 );
-    }
 };
 
-export default auction;
+export default joinInterestGroup;

@@ -9,6 +9,9 @@ const app = {
   auction: {
     auctions: [],
   },
+  joinInterestGroup: {
+    joinings: [],
+  },
   flow: {
     intervals: {},
   },
