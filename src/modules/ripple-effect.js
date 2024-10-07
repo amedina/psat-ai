@@ -10,10 +10,13 @@ const rippleEffect = {
         maxRadius: 200,
         animationComplete: false,
         speed: 1,
-    }
+    },
+    rippled: false,
 };
 
 rippleEffect.setUp = () => {
+  rippleEffect.rippled = false;
+
   for (let i = 0; i < rippleEffect.config.numRipples; i++) {
     rippleEffect.config.ripples.push({
       radius: 0,
@@ -23,6 +26,12 @@ rippleEffect.setUp = () => {
 }
 
 rippleEffect.start = ( x = 0, y = 0 ) => {
+  if ( rippleEffect.rippled ) {
+    return false;
+  }
+
+  rippleEffect.rippled = true;
+
   setInterval( () => {
     rippleEffect.create( x, y );
   }, 20 );

@@ -7,11 +7,9 @@ import config from '../config';
 import rippleEffect from './ripple-effect';
 
 const auction = {};
-let rippled = false
 
 auction.setupAuctions = () => {
     rippleEffect.setUp();
-    // rippleEffect.start( 500, 200 );
 
     config.timeline.circles.forEach((circle, index) => {
         auction.setUp(index);
@@ -139,6 +137,8 @@ auction.draw = async (index) => {
 
     // Draw SSP box and line
     await drawLineAndBox(_auction.ssp);
+
+    // rippleEffect.start( _auction.ssp.box.x + config.flow.box.width, _auction.ssp.box.y );
 
     // Sequentially draw DSP boxes and lines
     const dsp = _auction.dsp;
