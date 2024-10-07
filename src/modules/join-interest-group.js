@@ -16,20 +16,16 @@ joinInterestGroup.setupJoinings = () => {
 }
 
 joinInterestGroup.setUp = (index) => {
-    const { position, circleProps } = config.timeline;
-    const { diameter, verticalSpacing } = circleProps;
-    const currentCircle = config.timeline.circles[index];
+    const { circleProps, circles } = config.timeline;
     const { box, smallBox, lineWidth } = config.flow;
+    const { diameter } = circleProps;
+    const currentCircle = circles[index];
     const _joining = {};
 
     // Calculate (x, y) coordinates
-    const circleNumber = index + 1;
     const spaceFromTimeline = lineWidth + diameter / 2;
-    const x = position.x + spaceFromTimeline;
-    const circleRadius = diameter / 2;
-    const circleHeights = diameter * circleNumber - circleRadius;
-    const circleVerticalHeights = verticalSpacing * (circleNumber - 1) - verticalSpacing / 2;
-    const y = position.y / 2 + circleHeights + circleVerticalHeights;
+
+    const {x, y} = flow.calculateXYPostions( index );
 
     if (currentCircle.type !== 'advertiser') {
         return;
@@ -125,15 +121,21 @@ joinInterestGroup.draw = async (index) => {
     // Sequentially draw DSP boxes and lines
     const dsp = _joining.dsp;
     for (const dspItem of dsp) {
-        await drawBox(dspItem);  // Sequential execution for DSP items
+        await drawLineAndBox(dspItem);  // Sequential execution for DSP items
     }
 
-    await utils.delay( 1000 );
-
-    for (const dspItem of dsp) {
-        await drawLine(dspItem);  // Sequential execution for DSP items
-        await utils.delay( 1000 );
-    }
+    joinInterestGroup.remove(index);
 };
+
+joinInterestGroup.remove = (index) => {
+    const { ssp, dsp } = app.joinInterestGroup.joinings[index];
+    const x1 = ssp?.line?.x1;
+    const y1 = ssp?.line?.y1;
+    const x2 = dsp[0]?.line?.x1 + config.flow.box.width + config.flow.smallBox.width;
+
+    const height = config.flow.box.height + 22;
+
+    flow.createOverrideBox( x1, y1, x2, height );
+}
 
 export default joinInterestGroup;

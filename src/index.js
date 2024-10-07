@@ -29,8 +29,8 @@ app.init = async (p) => {
   app.auction.setupAuctions();
   app.joinInterestGroup.setupJoinings();
 
-  // await app.joinInterestGroup.draw(0);
-  await app.auction.draw(0);
+  await app.joinInterestGroup.draw(0);
+  // await app.auction.draw(0);
 }
 
 app.play = () => {

@@ -18,20 +18,16 @@ auction.setupAuctions = () => {
 }
 
 auction.setUp = (index) => {
-    const { position, circleProps } = config.timeline;
-    const { diameter, verticalSpacing } = circleProps;
-    const currentCircle = config.timeline.circles[index];
+    const { circleProps, circles } = config.timeline;
     const { box, smallBox, mediumBox, lineWidth, lineHeight } = config.flow;
+    const { diameter } = circleProps;
+    const currentCircle = circles[index];
     const _auction = {};
 
     // Calculate (x, y) coordinates
-    const circleNumber = index + 1;
     const spaceFromTimeline = lineWidth + diameter / 2;
-    const x = position.x + spaceFromTimeline;
-    const circleRadius = diameter / 2;
-    const circleHeights = diameter * circleNumber - circleRadius;
-    const circleVerticalHeights = verticalSpacing * (circleNumber - 1) - verticalSpacing / 2;
-    const y = position.y / 2 + circleHeights + circleVerticalHeights;
+
+    const {x, y} = flow.calculateXYPostions( index );
 
     if (currentCircle.type !== 'publisher') {
         return;

@@ -13,7 +13,7 @@ flow.createBox = (title, x, y, width, height) => {
     app.p.text(title, x + width / 2, y + height / 2);
 }
 
-flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '' ) => {
+flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '') => {
     const arrowSize = 10;
     const width = config.flow.lineWidth - arrowSize;
     const height = config.flow.lineHeight - arrowSize;
@@ -48,9 +48,9 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '' ) => {
                 if ((x2 - __x2) > width) {
                     clearInterval(app.flow.intervals['progressline']);
 
-                    if ( text ) {
+                    if (text) {
                         app.p.textSize(10);
-                        app.p.text( text, __x2 + width / 2, y1 + height / 2 );
+                        app.p.text(text, __x2 + width / 2, y1 + height / 2);
                         app.p.textSize(12);
                     }
 
@@ -80,6 +80,39 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '' ) => {
             }
         }, 10);
     });
+}
+
+flow.calculateXYPostions = (index) => {
+    const { position, circleProps } = config.timeline;
+    const { diameter, verticalSpacing } = circleProps;
+    const { lineWidth } = config.flow;
+
+    // Calculate (x, y) coordinates
+    const circleNumber = index + 1;
+    const spaceFromTimeline = lineWidth + diameter / 2;
+    const x = position.x + spaceFromTimeline;
+    const circleRadius = diameter / 2;
+    const circleHeights = diameter * circleNumber - circleRadius;
+    const circleVerticalHeights = verticalSpacing * (circleNumber - 1) - verticalSpacing / 2;
+    const y = position.y / 2 + circleHeights + circleVerticalHeights;
+
+    return { x, y };
+}
+
+flow.createOverrideBox = (x1, y1, x2, height) => {
+    const p = app.p;
+    const paddingLeft = 1;
+
+    // Calculate the width of the box
+    let width = x2 - x1;
+    
+    // Calculate the top y-position for the rectangle
+    let topY = y1 - height / 2;
+
+    // Draw the rectangle
+    p.noStroke(); // Remove the border
+    p.fill(config.canvas.background); // Set the fill color from the config
+    p.rect(x1 + paddingLeft, topY, width, height); // Draw the rectangle
 }
 
 export default flow;
