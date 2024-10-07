@@ -33,13 +33,13 @@ utils.clearRequestInterval = (handle) => {
 utils.drawArrow = (size, x, y, direction = 'right') => {
     let _x, _y;
 
-    if ( direction === 'right' ) {
+    if (direction === 'right') {
         _x = x - 1;
         _y = y;
-    } else if ( direction === 'left' ) {
+    } else if (direction === 'left') {
         _x = x + 1;
         _y = y;
-    } else if ( direction === 'down' ) {
+    } else if (direction === 'down') {
         _x = x;
         _y = y - 1;
     }
@@ -85,7 +85,7 @@ utils.triangle = (size, x, y, direction = 'right', color = 'black') => {
     // Move the origin to the triangle's center
     if (direction === 'right') {
         p.translate(x + spacing, y);
-    } else if ( direction === 'left' ) {
+    } else if (direction === 'left') {
         p.translate(x - spacing, y + spacing);
     } else {
         p.translate(x, y + spacing);
@@ -102,6 +102,10 @@ utils.triangle = (size, x, y, direction = 'right', color = 'black') => {
 
     // Restore the previous state of the canvas
     p.pop();
+}
+
+utils.delay = (ms) => {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export default utils;

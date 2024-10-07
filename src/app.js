@@ -18,6 +18,7 @@ const app = {
     ssp: undefined
   },
   canDrawAuctionFlow: true,
+  p: null,
 }
 
 export default app;

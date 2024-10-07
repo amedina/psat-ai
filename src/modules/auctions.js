@@ -4,6 +4,7 @@
 import flow from './flow';
 import app from '../app';
 import config from '../config';
+import utils from './utils';
 import rippleEffect from './ripple-effect';
 
 const auction = {};
@@ -128,28 +129,47 @@ auction.draw = async (index) => {
 
     // Helper function to draw lines and boxes
     const drawLineAndBox = async (item) => {
-        await flow.progressLine(item.line.x1, item.line.y1, item.line.x2, item.line.y2, item.line.direction);
+        await drawLine(item);
+        await drawBox(item);
+    };
 
+    const drawLine = async (item) => {
+        await flow.progressLine(item.line.x1, item.line.y1, item.line.x2, item.line.y2, item.line.direction);
+    }
+
+    const drawBox = async (item) => {
         if ( item.box ) {
             flow.createBox(item.name, item.box.x, item.box.y, item.box.width, item.box.height);
         }
-    };
+    }
 
     // Draw SSP box and line
     await drawLineAndBox(_auction.ssp);
+    await utils.delay( 500 );
 
-    // rippleEffect.start( _auction.ssp.box.x + config.flow.box.width, _auction.ssp.box.y );
+    await rippleEffect.start( 
+        _auction.ssp.box.x + config.flow.box.width + 2, 
+        _auction.ssp.box.y + config.flow.box.height / 2
+    );
 
     // Sequentially draw DSP boxes and lines
     const dsp = _auction.dsp;
     for (const dspItem of dsp) {
-        await drawLineAndBox(dspItem);  // Sequential execution for DSP items
+        await drawBox(dspItem);  // Sequential execution for DSP items
+    }
+
+    await utils.delay( 1000 );
+
+    for (const dspItem of dsp) {
+        await drawLine(dspItem);  // Sequential execution for DSP items
+        await utils.delay( 1000 );
     }
 
     // Sequentially draw bottom flow boxes and lines
     const bottomFlow = _auction.bottomFlow;
     for (const flowItem of bottomFlow) {
         await drawLineAndBox(flowItem);  // Sequential execution for bottom flow
+        await utils.delay( 1000 );
     }
 };
 

@@ -2,13 +2,14 @@
  * Internal dependencies.
  */
 import app from '../app';
+import config from '../config';
 
 const rippleEffect = {
     config: {
         ripples: [],
         numRipples: 3,
         maxRadius: 200,
-        animationComplete: false,
+        time: 4000,
         speed: 1,
     },
     rippled: false,
@@ -26,29 +27,45 @@ rippleEffect.setUp = () => {
 }
 
 rippleEffect.start = ( x = 0, y = 0 ) => {
-  if ( rippleEffect.rippled ) {
-    return false;
-  }
+  return new Promise((resolve) => {
 
-  rippleEffect.rippled = true;
+    if ( rippleEffect.rippled ) {
+      resolve();
+      return false;
+    }
+  
+    let totalTime = 0;
+    let runInternval = 20;
+  
+    rippleEffect.rippled = true;
+  
+    const interval = setInterval( () => {
+  
+      if ( totalTime > rippleEffect.config.time ) {
+        clearInterval( interval );
+        resolve();
+      }
+  
+      rippleEffect.create( x, y );
+      totalTime = runInternval + totalTime;
+  
+    }, runInternval );
 
-  setInterval( () => {
-    rippleEffect.create( x, y );
-  }, 20 );
+  });
 }
 
 rippleEffect.create = ( rippleX, rippleY ) => {
   // Calculate the area to clear
-  let { ripples, numRipples, animationComplete, speed, maxRadius } = rippleEffect.config;
+  let { ripples, numRipples, speed, maxRadius } = rippleEffect.config;
   let clearWidth = maxRadius * 2 + (numRipples - 1) * 40;
   let clearHeight = maxRadius * 2;
   const p = app.p;
 
   p.push();
   // Clear only the area used by the ripples
-  p.fill(240);
+  p.fill(config.canvas.background);
   p.noStroke();
-  p.rect(rippleX - 1, rippleY - clearHeight / 2, clearWidth, clearHeight);
+  p.rect(rippleX - 1, rippleY - clearHeight / 2 - 200, clearWidth, clearHeight + 400);
 
   let allComplete = true;
   p.translate(rippleX, rippleY);
@@ -70,11 +87,6 @@ rippleEffect.create = ( rippleX, rippleY ) => {
     // Increased spacing between ripples
     let spacing = 40;
     p.arc(0, 0, (ripple.radius + i * spacing) * 2, (ripple.radius + i * spacing) * 2, -p.HALF_PI, p.HALF_PI);
-  }
-
-  if (allComplete && !animationComplete) {
-    animationComplete = true;
-    p.noLoop(); // Stop the animation when complete
   }
 
   p.pop(); // Restore the original transformation state
