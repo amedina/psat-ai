@@ -32,7 +32,9 @@ joinInterestGroup.setUp = (index) => {
     }
 
     // Setup DSP blocks
-    _joining.ssp = {
+    _joining.dspTags = [];
+
+    _joining.dspTags.push( {
         name: 'DSP Tag',
         box: { x, y, width: box.width, height: box.height },
         line: {
@@ -43,7 +45,20 @@ joinInterestGroup.setUp = (index) => {
             speed: 0.6,
             text: 'joinInterestGroup()'
         }
-    };
+    });
+
+    _joining.dspTags.push( {
+        name: 'DSP Tag',
+        line: {
+            x1: x - spaceFromTimeline + diameter / 2,
+            y1: y + box.height / 2,
+            x2: x,
+            y2: y + box.height / 2,
+            speed: 0.6,
+            direction: 'left',
+            text: 'joinInterestGroup()'
+        }
+    });
 
     // Setup DSP blocks
     _joining.dsp = [];
@@ -114,8 +129,9 @@ joinInterestGroup.draw = async (index) => {
         }
     }
 
-    // Draw SSP box and line
-    await drawLineAndBox(_joining.ssp);
+    // Draw DSP Tags box and line
+    await drawLineAndBox(_joining.dspTags[0]);
+
     await utils.delay( 500 );
 
     // Sequentially draw DSP boxes and lines
@@ -124,13 +140,17 @@ joinInterestGroup.draw = async (index) => {
         await drawLineAndBox(dspItem);  // Sequential execution for DSP items
     }
 
+    await drawLine(_joining.dspTags[1]);
+
+    await utils.delay( 1500 );
+
     joinInterestGroup.remove(index);
 };
 
 joinInterestGroup.remove = (index) => {
-    const { ssp, dsp } = app.joinInterestGroup.joinings[index];
-    const x1 = ssp?.line?.x1;
-    const y1 = ssp?.line?.y1;
+    const { dspTags, dsp } = app.joinInterestGroup.joinings[index];
+    const x1 = dspTags[0]?.line?.x1;
+    const y1 = dspTags[0]?.line?.y1;
     const x2 = dsp[0]?.line?.x1 + config.flow.box.width + config.flow.smallBox.width;
 
     const height = config.flow.box.height + 22;
