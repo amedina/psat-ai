@@ -6,6 +6,7 @@ import app from '../app';
 import config from '../config';
 import utils from './utils';
 import rippleEffect from './ripple-effect';
+import timeline from './timeline';
 
 const joinInterestGroup = {};
 
@@ -142,6 +143,8 @@ joinInterestGroup.draw = async (index) => {
     }
 
     await drawLine(_joining.dspTags[1]);
+
+    timeline.drawSmallCircles(index);
 
     await utils.delay( 1500 );
 

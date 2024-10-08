@@ -32,7 +32,6 @@ timeline.drawTimeline = ({ position, circleProps, circles }) => {
 
         app.timeline.circlePositions.push({ x: position.x, y: yPosition });
         timeline.drawCircle(index);
-        // app.drawSmallCircles( index );
 
         p.text(circleItem.datetime, leftPadding, yPosition);
         p.text(circleItem.website, leftPadding, yPosition + 20);
@@ -88,10 +87,10 @@ timeline.drawSmallCircles = (index) => {
 
         smallCirclePositions.push({ x: randomX, y: randomY });
 
-        const randomColor = p.color(random(255), random(255), random(255));
+        const randomColor = p.color(p.random(255), p.random(255), p.random(255));
 
         p.push();
-        p.stroke(randomColor);
+        p.fill(randomColor);
 
         p.circle(randomX, randomY, smallCircleDiameter);
         p.pop();
