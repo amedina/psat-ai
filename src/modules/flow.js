@@ -18,6 +18,7 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '') => {
     const width = config.flow.lineWidth - arrowSize;
     const height = config.flow.lineHeight - arrowSize;
     const incrementBy = 1;
+    const p = app.p;
 
     let _x2 = x1; // For horizontal directions
     let _y2 = y1; // For vertical direction
@@ -36,7 +37,7 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '') => {
                 }
 
                 // Draw the progressing line horizontally
-                app.p.line(x1, y1, _x2, y2);
+                p.line(x1, y1, _x2, y2);
 
                 // Draw the arrow in the correct direction
                 utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
@@ -49,16 +50,16 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '') => {
                     clearInterval(app.flow.intervals['progressline']);
 
                     if (text) {
-                        app.p.textSize(10);
-                        app.p.text(text, __x2 + width / 2, y1 + height / 2);
-                        app.p.textSize(12);
+                        p.textSize(config.canvas.fontSize - 2);
+                        p.text(text, __x2 + width / 2, y1 + height / 2);
+                        p.textSize(config.canvas.fontSize); // Reset.
                     }
 
                     resolve(); // Resolve the promise once the interval is cleared
                 }
 
                 // Draw the progressing line horizontally (left direction)
-                app.p.line(x2, y2 + margin, __x2, y1 + margin);
+                p.line(x2, y2 + margin, __x2, y1 + margin);
 
                 // Draw the arrow in the correct direction
                 utils.drawArrow(arrowSize, __x2, y1 + 4, direction); // Draw new arrow
@@ -73,7 +74,7 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '') => {
                 }
 
                 // Draw the progressing line vertically
-                app.p.line(x1, y1, x2, _y2);
+                p.line(x1, y1, x2, _y2);
 
                 // Draw the arrow in the correct direction
                 utils.drawArrow(arrowSize, x1, _y2, direction); // Draw new arrow
@@ -110,9 +111,11 @@ flow.createOverrideBox = (x1, y1, x2, height) => {
     let topY = y1 - height / 2;
 
     // Draw the rectangle
+    p.push();
     p.noStroke(); // Remove the border
     p.fill(config.canvas.background); // Set the fill color from the config
     p.rect(x1 + paddingLeft, topY, width, height); // Draw the rectangle
+    p.pop();
 }
 
 export default flow;

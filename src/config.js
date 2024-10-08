@@ -2,6 +2,7 @@ const config = {
     canvas: {
       width: 700,
       background: 245,
+      fontSize: 12
     },
     timeline: {
       position: {x: 160, y: 50},

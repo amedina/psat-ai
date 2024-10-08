@@ -30,7 +30,7 @@ app.init = async (p) => {
   app.joinInterestGroup.setupJoinings();
 
   await app.joinInterestGroup.draw(0);
-  // await app.auction.draw(0);
+  await app.auction.draw(0);
 }
 
 app.play = () => {
@@ -70,8 +70,8 @@ const sketch = (p) => {
     const circleVerticalSpace = config.timeline.circleProps.verticalSpacing + config.timeline.circleProps.diameter;
     const canvas = p.createCanvas(config.canvas.width, circleVerticalSpace * config.timeline.circles.length);
     canvas.parent('ps-canvas');
-    p.background(245);
-    p.textSize(12);
+    p.background(config.canvas.background);
+    p.textSize(config.canvas.fontSize);
 
     (async () => {
       await app.init(p);
