@@ -13,30 +13,17 @@ const config = {
       width: 30,
       height: 30,
     },
-    circles: [
-      // Epoch 1
-      { website: 'adv1.com', datetime: '2023-10-01 10:00' },
-      { website: 'adv2.com', datetime: '2023-10-01 11:00' },
-      { website: 'pub1.com', datetime: '2023-10-01 12:00' },
-      { website: 'adv3.com', datetime: '2023-10-01 13:00' },
-      { website: 'adv5.com', datetime: '2023-10-01 14:00' },
-      { website: 'pub2.com', datetime: '2023-10-01 15:00' },
-      { website: 'adv6.com', datetime: '2023-10-01 16:00' },
-      { website: 'adv7.com', datetime: '2023-10-01 17:00' },
-    ],
+    circles: [],
   },
 };
 
 const app = {
   isPaused: false,
-  circlePositions: [],
+  circlePositions: [[], [], []],
   currentIndex: 0,
+  epochIndex: 0,
   internval: undefined,
   visitedTopics: {},
-  animated: {
-    timelineVerticleLine: undefined,
-    ssp: undefined,
-  },
   utils: {},
 };
 
@@ -73,37 +60,37 @@ app.getIncrementalDateTime = (startDate, incrementMinutes) => {
   return date.toISOString().slice(0, 16).replace('T', ' ');
 };
 
-app.generateTimelineVisits = (websites, numVisitsPerEpoch, numEpochs) => {
-  const visits = [];
-  const startDate = new Date();
-  let currentDateTime = new Date(startDate);
+app.getRandomTopics = () => {
+  const numTopics = Math.floor(Math.random() * 4) + 2;
+  const shuffledTopics = topics.sort(() => 0.5 - Math.random());
+  return shuffledTopics.slice(0, numTopics);
+};
 
-  const incrementMinutes = (7 * 24 * 60) / (numVisitsPerEpoch * numEpochs); // Total minutes in a week divided by total visits
+app.generateTimelineVisits = (websites, numVisitsPerEpoch, numEpochs) => {
+  const allEpochs = [];
+  const startDate = new Date();
 
   for (let epoch = 0; epoch < numEpochs; epoch++) {
+    const visits = [];
+    let currentDateTime = new Date(startDate);
+    currentDateTime.setDate(currentDateTime.getDate() + epoch * 7); // Each epoch starts a week apart
+
+    const incrementMinutes = (7 * 24 * 60) / numVisitsPerEpoch; // Total minutes in a week divided by visits per epoch
+
     for (let visit = 0; visit < numVisitsPerEpoch; visit++) {
       const website = websites[Math.floor(Math.random() * websites.length)];
       const datetime = app.getIncrementalDateTime(
         currentDateTime,
         incrementMinutes
       );
-      visits.push({ website, datetime });
+      const topics = app.getRandomTopics();
+      visits.push({ website, datetime, topics });
       currentDateTime = new Date(datetime); // Update currentDateTime for the next visit
     }
+    allEpochs.push(visits);
   }
 
-  return visits;
-};
-
-app.resetTimeline = () => {
-  clear();
-  clearInterval(app.internval);
-  app.internval = undefined;
-  app.currentIndex = -1;
-  app.visitedTopics = {};
-  config.timeline.circles = app.generateTimelineVisits(websites, 8, 1); // 3 epochs, each with 8 visits
-  app.circlePositions = [];
-  setup();
+  return allEpochs;
 };
 
 app.getTopicColors = () => ({
@@ -119,12 +106,6 @@ app.getTopicColors = () => ({
   food: color(255, 140, 0), // Dark Orange
   fashion: color(255, 20, 147), // Deep Pink
 });
-
-app.getRandomTopics = () => {
-  const numTopics = Math.floor(Math.random() * 4) + 2;
-  const shuffledTopics = topics.sort(() => 0.5 - Math.random());
-  return shuffledTopics.slice(0, numTopics);
-};
 
 app.calculateMaxSiteWidth = () => {
   const topicSites = app.visitedTopics;
@@ -217,8 +198,33 @@ app.pause = () => {
 app.setupInterval = () => {
   app.internval = setInterval(() => {
     if (!app.isPaused) {
-      app.renderUserIcon();
+      app.renderUserIcon(app.epochIndex, app.currentIndex);
+
       app.currentIndex++;
+      if (app.currentIndex >= config.timeline.circles[app.epochIndex].length) {
+        clearInterval(app.internval);
+
+        setTimeout(() => {
+          app.currentIndex = 0;
+
+          clear();
+          app.epochIndex++;
+          config.timeline.circles.push(
+            app.generateTimelineVisits(websites, 8, 1)[0]
+          );
+
+          if (config.timeline.circles.length > 3) {
+            config.timeline.circles.shift();
+            app.epochIndex = 2;
+          }
+
+          if (app.epochIndex >= 2) {
+            app.moveEpochTimeline(app.epochIndex - 2, 500);
+          }
+          app.moveEpochTimeline(app.epochIndex - 1, 250);
+          app.drawEpoch(app.epochIndex);
+        }, 1000);
+      }
     }
   }, config.timeline.stepDelay);
 };
@@ -231,10 +237,11 @@ app.handlePlayPauseButttons = () => {
   app.pauseButton.addEventListener('click', app.pause);
 };
 
-app.drawTimeline = ({ position, circleProps, circles }) => {
+app.drawTimeline = ({ position, circleProps, circles }, epochIndex) => {
+  console.log(epochIndex);
   const { diameter, verticalSpacing } = circleProps;
   const circleVerticalSpace = verticalSpacing + diameter;
-  const leftPadding = 10;
+  const leftPadding = position.x - 150;
 
   textAlign(LEFT, CENTER);
 
@@ -242,8 +249,8 @@ app.drawTimeline = ({ position, circleProps, circles }) => {
   circles.forEach((circleItem, index) => {
     const yPosition = verticalSpacing + circleVerticalSpace * index;
 
-    app.circlePositions.push({ x: position.x, y: yPosition });
-    app.drawCircle(index);
+    app.circlePositions[epochIndex].push({ x: position.x, y: yPosition });
+    app.drawCircle(epochIndex, index);
 
     text(circleItem.datetime, leftPadding, yPosition);
     text(circleItem.website, leftPadding, yPosition + 20);
@@ -253,21 +260,21 @@ app.drawTimeline = ({ position, circleProps, circles }) => {
   });
 };
 
-app.drawCircle = (index) => {
-  const position = app.circlePositions[index];
+app.drawCircle = (epoch, index) => {
+  const position = app.circlePositions[epoch][index];
   const { diameter } = config.timeline.circleProps;
 
   circle(position.x, position.y, diameter);
 };
 
-app.drawSmallCircles = (index) => {
-  const position = app.circlePositions[index];
+app.drawSmallCircles = (epoch, index) => {
+  const position = app.circlePositions[epoch][index];
   const { diameter } = config.timeline.circleProps;
   const smallCircleDiameter = diameter / 5;
 
   const distanceFromEdge = 6;
 
-  const topics = config.timeline.circles[index].topics;
+  const topics = config.timeline.circles[epoch][index].topics;
   const numSmallCircles = topics.length;
 
   const smallCirclePositions = [];
@@ -303,31 +310,29 @@ app.drawSmallCircles = (index) => {
   }
 };
 
-app.drawTimelineKiLine = () => {
-  const position = config.timeline.position;
+app.drawTimelineKiLine = (position) => {
   const { diameter, verticalSpacing } = config.timeline.circleProps;
   const circleVerticalSpace = verticalSpacing + diameter;
 
-  line(
-    position.x,
-    position.y,
-    position.x,
-    circleVerticalSpace * config.timeline.circles.length
-  );
+  line(position.x, position.y, position.x, circleVerticalSpace * 8);
 };
 
-app.renderUserIcon = () => {
-  const circlePosition = app.circlePositions[app.currentIndex];
+app.renderUserIcon = (epochIndex, visitIndex) => {
+  if (epochIndex >= config.timeline.circles.length) {
+    app.pause();
+    return;
+  }
+
+  const circlePosition = app.circlePositions[epochIndex][visitIndex];
 
   if (circlePosition === undefined) {
-    app.resetTimeline();
     return;
   }
 
   const user = config.timeline.user;
 
-  if (app.currentIndex > 0) {
-    app.drawCircle(app.currentIndex - 1);
+  if (visitIndex > 0) {
+    app.drawCircle(epochIndex, visitIndex - 1);
   }
 
   image(
@@ -337,9 +342,9 @@ app.renderUserIcon = () => {
     user.width,
     user.height
   );
-  app.drawSmallCircles(app.currentIndex);
+  app.drawSmallCircles(epochIndex, visitIndex);
 
-  const currentCircle = config.timeline.circles[app.currentIndex];
+  const currentCircle = config.timeline.circles[epochIndex][visitIndex];
   const currentSite = currentCircle.website;
 
   currentCircle.topics.forEach((topic) => {
@@ -352,69 +357,48 @@ app.renderUserIcon = () => {
   });
 };
 
-app.utils.animateLine = (
-  startX,
-  startY,
-  endX,
-  endY,
-  speed = 0.01,
-  direction = 'right'
-) => {
-  let currentX = startX;
-  let currentY = startY;
-  let done = false;
-
-  return function () {
-    if (done) return; // Stop animation when the line is fully drawn
-
-    // Calculate progress for x and y
-    let progressX = (endX - currentX) * speed;
-    let progressY = (endY - currentY) * speed;
-
-    // Draw the incremental line
-    line(startX, startY, currentX, currentY);
-
-    // Update currentX and currentY
-    currentX += progressX;
-    currentY += progressY;
-
-    // Check if the line has reached the destination
-    if (dist(currentX, currentY, endX, endY) < 1) {
-      // Draw the final line and mark it as done
-      line(startX, startY, endX, endY);
-
-      if (direction === 'down') {
-        image(arrowDownIcon, startX - 12.5, startY + 35, 25, 25);
-      } else {
-        image(arrowRightIcon, startX + 85, startY - 13, 25, 25);
-      }
-      done = true;
-    }
+app.moveEpochTimeline = (epochIndex, moveBy) => {
+  const epoch = config.timeline.circles[epochIndex];
+  const position = {
+    x: config.timeline.position.x + moveBy,
+    y: config.timeline.position.y,
   };
+  app.circlePositions[epochIndex + 1] = [];
+  app.circlePositions[epochIndex] = [];
+
+  app.drawTimelineKiLine(position);
+  app.drawTimeline(
+    {
+      position,
+      circleProps: config.timeline.circleProps,
+      circles: epoch,
+    },
+    epochIndex
+  );
+
+  let visitIndex = 0;
+  while (visitIndex < epoch.length) {
+    app.renderUserIcon(epochIndex, visitIndex);
+    visitIndex++;
+  }
 };
 
-app.utils.animateLineOnce = (
-  func,
-  startX,
-  startY,
-  endX,
-  endY,
-  speed = 0.01,
-  direction = 'right'
-) => {
-  // Draw the vertical timeline line
-  if (!app.animated[func]) {
-    app.animated[func] = app.utils.animateLine(
-      startX,
-      startY,
-      endX,
-      endY,
-      speed,
-      direction
-    );
-  }
+app.drawEpoch = (epochIndex) => {
+  const epoch = config.timeline.circles[epochIndex];
+  console.log(epoch);
 
-  app.animated[func]();
+  app.circlePositions[epochIndex] = [];
+  app.drawTimelineKiLine(config.timeline.position);
+  app.drawTimeline(
+    {
+      position: config.timeline.position,
+      circleProps: config.timeline.circleProps,
+      circles: epoch,
+    },
+    epochIndex
+  );
+  app.handlePlayPauseButttons();
+  app.play();
 };
 
 function preload() {
@@ -430,28 +414,18 @@ function preload() {
 }
 
 function setup() {
-  config.timeline.circles = app.generateTimelineVisits(websites, 1, 8);
+  config.timeline.circles = app.generateTimelineVisits(websites, 8, 1);
   const circleVerticalSpace =
     config.timeline.circleProps.verticalSpacing +
     config.timeline.circleProps.diameter;
-  const canvas = createCanvas(
-    config.canvas.width,
-    circleVerticalSpace * config.timeline.circles.length
-  );
+  const canvas = createCanvas(config.canvas.width, circleVerticalSpace * 8);
   canvas.parent('ps-canvas');
   background(245);
 
-  config.timeline.circles.forEach((circle) => {
-    circle.topics = app.getRandomTopics();
-  });
-  app.drawTimelineKiLine();
-  app.drawTimeline(config.timeline);
-  app.handlePlayPauseButttons();
-
-  app.play();
+  app.drawEpoch(app.epochIndex);
 }
 
 function draw() {
   textSize(12);
-  app.drawTable();
+  // app.drawTable();
 }
