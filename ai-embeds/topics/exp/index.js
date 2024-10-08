@@ -50,16 +50,47 @@ const websites = [
   'adv8.com',
 ];
 
+app.handlePlayPauseButttons = () => {
+  app.playButton = document.getElementById('play');
+  app.pauseButton = document.getElementById('pause');
+
+  app.playButton.addEventListener('click', app.play);
+  app.pauseButton.addEventListener('click', app.pause);
+};
+
+app.play = () => {
+  app.playButton.classList.add('hidden');
+  app.pauseButton.classList.remove('hidden');
+  app.isPaused = false;
+  app.setupInterval();
+};
+
+app.pause = () => {
+  app.pauseButton.classList.add('hidden');
+  app.playButton.classList.remove('hidden');
+  app.isPaused = true;
+  clearInterval(app.internval);
+};
+
+app.getTopicColors = () => ({
+  sports: color(255, 99, 71), // Tomato
+  news: color(135, 206, 235), // Sky Blue
+  entertainment: color(255, 182, 193), // Light Pink
+  technology: color(100, 149, 237), // Cornflower Blue
+  health: color(144, 238, 144), // Light Green
+  science: color(255, 160, 122), // Light Salmon
+});
+
+app.getRandomTopics = () => {
+  const numTopics = Math.floor(Math.random() * 2) + 2;
+  const shuffledTopics = topics.sort(() => 0.5 - Math.random());
+  return shuffledTopics.slice(0, numTopics);
+};
+
 app.getIncrementalDateTime = (startDate, incrementMinutes) => {
   const date = new Date(startDate);
   date.setMinutes(date.getMinutes() + incrementMinutes);
   return date.toISOString().slice(0, 16).replace('T', ' ');
-};
-
-app.getRandomTopics = () => {
-  const numTopics = Math.floor(Math.random() * 4) + 2;
-  const shuffledTopics = topics.sort(() => 0.5 - Math.random());
-  return shuffledTopics.slice(0, numTopics);
 };
 
 app.generateTimelineVisits = (
@@ -85,15 +116,6 @@ app.generateTimelineVisits = (
 
   return visits;
 };
-
-app.getTopicColors = () => ({
-  sports: color(255, 99, 71), // Tomato
-  news: color(135, 206, 235), // Sky Blue
-  entertainment: color(255, 182, 193), // Light Pink
-  technology: color(100, 149, 237), // Cornflower Blue
-  health: color(144, 238, 144), // Light Green
-  science: color(255, 160, 122), // Light Salmon
-});
 
 app.calculateMaxSiteWidth = (epochIndex) => {
   const topicSites = app.visitedTopics[epochIndex];
@@ -173,20 +195,6 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
   pop();
 };
 
-app.play = () => {
-  app.playButton.classList.add('hidden');
-  app.pauseButton.classList.remove('hidden');
-  app.isPaused = false;
-  app.setupInterval();
-};
-
-app.pause = () => {
-  app.pauseButton.classList.add('hidden');
-  app.playButton.classList.remove('hidden');
-  app.isPaused = true;
-  clearInterval(app.internval);
-};
-
 app.setupInterval = () => {
   app.internval = setInterval(() => {
     if (!app.isPaused) {
@@ -219,29 +227,29 @@ app.setupInterval = () => {
           }
 
           if (app.epochIndex >= 2) {
-            app.moveEpochTimeline(app.epochIndex - 2, 400, app.weekCount - 2);
+            app.moveEpochTimeline(app.epochIndex - 2, 500, app.weekCount - 2);
             app.drawTable(app.epochIndex - 2, app.weekCount - 2, {
               y: config.timeline.position.y + 600,
             });
           }
-          app.moveEpochTimeline(app.epochIndex - 1, 200, app.weekCount - 1);
+          app.moveEpochTimeline(app.epochIndex - 1, 250, app.weekCount - 1);
           app.drawTable(app.epochIndex - 1, app.weekCount - 1, {
             y: config.timeline.position.y + 300,
           });
 
           app.drawEpoch(app.epochIndex, app.weekCount);
+          app.drawTable(app.epochIndex, app.weekCount);
         }, 1000);
       }
     }
   }, config.timeline.stepDelay);
 };
 
-app.handlePlayPauseButttons = () => {
-  app.playButton = document.getElementById('play');
-  app.pauseButton = document.getElementById('pause');
+app.drawTimelineKiLine = (position) => {
+  const { diameter, verticalSpacing } = config.timeline.circleProps;
+  const circleVerticalSpace = verticalSpacing + diameter;
 
-  app.playButton.addEventListener('click', app.play);
-  app.pauseButton.addEventListener('click', app.pause);
+  line(position.x, position.y, position.x, circleVerticalSpace * 8);
 };
 
 app.drawTimeline = (
@@ -323,13 +331,6 @@ app.drawSmallCircles = (epoch, index) => {
     circle(randomX, randomY, smallCircleDiameter);
     pop();
   }
-};
-
-app.drawTimelineKiLine = (position) => {
-  const { diameter, verticalSpacing } = config.timeline.circleProps;
-  const circleVerticalSpace = verticalSpacing + diameter;
-
-  line(position.x, position.y, position.x, circleVerticalSpace * 8);
 };
 
 app.renderUserIcon = (epochIndex, visitIndex) => {
