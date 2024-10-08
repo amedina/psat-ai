@@ -1,6 +1,6 @@
 const config = {
   canvas: {
-    width: 1400,
+    width: 1600,
   },
   timeline: {
     position: { x: 160, y: 100 },
@@ -24,7 +24,7 @@ const app = {
   epochIndex: 0,
   weekCount: 1,
   internval: undefined,
-  visitedTopics: {},
+  visitedTopics: [[], [], []],
   utils: {},
 };
 
@@ -35,11 +35,6 @@ const topics = [
   'technology',
   'health',
   'science',
-  'business',
-  'education',
-  'travel',
-  'food',
-  'fashion',
 ];
 
 const websites = [
@@ -98,15 +93,10 @@ app.getTopicColors = () => ({
   technology: color(100, 149, 237), // Cornflower Blue
   health: color(144, 238, 144), // Light Green
   science: color(255, 160, 122), // Light Salmon
-  business: color(218, 165, 32), // Goldenrod
-  education: color(123, 104, 238), // Medium Slate Blue
-  travel: color(255, 215, 0), // Gold
-  food: color(255, 140, 0), // Dark Orange
-  fashion: color(255, 20, 147), // Deep Pink
 });
 
-app.calculateMaxSiteWidth = () => {
-  const topicSites = app.visitedTopics;
+app.calculateMaxSiteWidth = (epochIndex) => {
+  const topicSites = app.visitedTopics[epochIndex];
   let maxWidth = 0;
 
   Object.values(topicSites).forEach((sites) => {
@@ -120,18 +110,22 @@ app.calculateMaxSiteWidth = () => {
   return maxWidth;
 };
 
-app.drawTable = () => {
-  const topics = Object.keys(app.visitedTopics);
+app.drawTable = (epochIndex, weekCount, position = undefined) => {
+  const topics = Object.keys(app.visitedTopics[epochIndex]);
   const numRows = topics.length;
   const rowHeight = 30;
   const colWidth = 150;
-  const tableOffsetX = 400;
-  const tableOffsetY = 50;
-  const maxSiteWidth = app.calculateMaxSiteWidth();
+  const tableOffsetX = position?.x || 800;
+  const tableOffsetY = position?.y || 50;
+  const maxSiteWidth = app.calculateMaxSiteWidth(epochIndex);
   const topicColors = app.getTopicColors();
 
   push();
+  textSize(16);
+  text('Epoch Week ' + weekCount + ' Summary', tableOffsetX, tableOffsetY - 30);
+
   fill(255);
+  textSize(12);
   rect(
     tableOffsetX,
     tableOffsetY,
@@ -158,7 +152,7 @@ app.drawTable = () => {
 
     fill(0);
     text(topic, tableOffsetX + 10, y);
-    const sortedSites = app.visitedTopics[topic].slice().sort();
+    const sortedSites = app.visitedTopics[epochIndex][topic].slice().sort();
     text(sortedSites.join(', '), tableOffsetX + colWidth + 10, y);
 
     line(
@@ -197,6 +191,7 @@ app.setupInterval = () => {
   app.internval = setInterval(() => {
     if (!app.isPaused) {
       app.renderUserIcon(app.epochIndex, app.currentIndex);
+      app.drawTable(app.epochIndex, app.weekCount);
 
       app.currentIndex++;
       if (app.currentIndex >= config.timeline.circles[app.epochIndex].length) {
@@ -209,22 +204,31 @@ app.setupInterval = () => {
           app.epochIndex++;
           app.weekCount++;
           const nextStartDate = new Date(
-            config.timeline.circles[app.epochIndex - 1][7].datetime
+            config.timeline.circles[app.epochIndex - 1][5].datetime
           );
           nextStartDate.setDate(nextStartDate.getDate() + 1);
           config.timeline.circles.push(
-            app.generateTimelineVisits(websites, 8, nextStartDate)
+            app.generateTimelineVisits(websites, 6, nextStartDate)
           );
 
           if (config.timeline.circles.length > 3) {
             config.timeline.circles.shift();
+            app.visitedTopics.push([]);
+            app.visitedTopics.shift();
             app.epochIndex = 2;
           }
 
           if (app.epochIndex >= 2) {
-            app.moveEpochTimeline(app.epochIndex - 2, 500, app.weekCount - 2);
+            app.moveEpochTimeline(app.epochIndex - 2, 400, app.weekCount - 2);
+            app.drawTable(app.epochIndex - 2, app.weekCount - 2, {
+              y: config.timeline.position.y + 600,
+            });
           }
-          app.moveEpochTimeline(app.epochIndex - 1, 250, app.weekCount - 1);
+          app.moveEpochTimeline(app.epochIndex - 1, 200, app.weekCount - 1);
+          app.drawTable(app.epochIndex - 1, app.weekCount - 1, {
+            y: config.timeline.position.y + 300,
+          });
+
           app.drawEpoch(app.epochIndex, app.weekCount);
         }, 1000);
       }
@@ -359,11 +363,11 @@ app.renderUserIcon = (epochIndex, visitIndex) => {
   const currentSite = currentCircle.website;
 
   currentCircle.topics.forEach((topic) => {
-    if (!app.visitedTopics[topic]) {
-      app.visitedTopics[topic] = [];
+    if (!app.visitedTopics[epochIndex][topic]) {
+      app.visitedTopics[epochIndex][topic] = [];
     }
-    if (!app.visitedTopics[topic].includes(currentSite)) {
-      app.visitedTopics[topic].push(currentSite);
+    if (!app.visitedTopics[epochIndex][topic].includes(currentSite)) {
+      app.visitedTopics[epochIndex][topic].push(currentSite);
     }
   });
 };
@@ -427,7 +431,7 @@ function preload() {
 }
 
 function setup() {
-  config.timeline.circles = [app.generateTimelineVisits(websites, 8)];
+  config.timeline.circles = [app.generateTimelineVisits(websites, 6)];
   const circleVerticalSpace =
     config.timeline.circleProps.verticalSpacing +
     config.timeline.circleProps.diameter;
@@ -436,9 +440,4 @@ function setup() {
   background(245);
 
   app.drawEpoch(app.epochIndex, app.weekCount);
-}
-
-function draw() {
-  textSize(12);
-  // app.drawTable();
 }
