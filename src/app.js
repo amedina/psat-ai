@@ -4,7 +4,6 @@ const app = {
     circlePositions: [],
     circlePublisherIndices: [],
     currentIndex: 0,
-    internval: undefined,
   },
   auction: {
     auctions: [],

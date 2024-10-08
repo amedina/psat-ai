@@ -15,6 +15,8 @@ auction.setupAuctions = () => {
     config.timeline.circles.forEach((circle, index) => {
         auction.setUp(index);
     });
+
+    auction.remove( 2 );
 }
 
 auction.setUp = (index) => {
@@ -170,6 +172,19 @@ auction.draw = async (index) => {
         await drawLineAndBox(flowItem);  // Sequential execution for bottom flow
         await utils.delay( 1000 );
     }
+
+    utils.delay( 1000 );
+    auction.remove(index);
 };
+
+auction.remove = (index) => {
+    const { ssp } = app.auction.auctions[index];
+    const x1 = ssp.line.x1;
+    const y1 = ssp.line.y1 + 100;
+    const x2 = 660;
+    const height = 400;
+
+    flow.createOverrideBox( x1, y1, x2, height );
+}
 
 export default auction;

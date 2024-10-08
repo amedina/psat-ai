@@ -28,6 +28,8 @@ app.init = async (p) => {
 
   app.auction.setupAuctions();
   app.joinInterestGroup.setupJoinings();
+
+  app.play();
 }
 
 app.play = () => {
@@ -41,7 +43,6 @@ app.pause = () => {
   app.pauseButton.classList.add('hidden');
   app.playButton.classList.remove('hidden');
   app.timeline.isPaused = true;
-  app.utils.clearRequestInterval(app.timeline.internval);
 }
 
 app.setupLoop = async () => {
@@ -76,7 +77,6 @@ const sketch = (p) => {
 
     (async () => {
       await app.init(p);
-      app.play();
     })();
   };
 

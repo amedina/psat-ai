@@ -110,9 +110,6 @@ joinInterestGroup.draw = async (index) => {
 
     const _joining = app.joinInterestGroup.joinings[index];
 
-    console.log( _joining, '_joining' );
-    console.log( app.joinInterestGroup.joinings, 'app.joinInterestGroup.joinings' )
-
     if (!_joining) {
         return;
     }
