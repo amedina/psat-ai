@@ -3,10 +3,10 @@ const config = {
     width: 1400,
   },
   timeline: {
-    position: { x: 160, y: 0 },
+    position: { x: 160, y: 100 },
     circleProps: {
       diameter: 50,
-      verticalSpacing: 50,
+      verticalSpacing: 80,
     },
     stepDelay: 1500,
     user: {
@@ -22,6 +22,7 @@ const app = {
   circlePositions: [[], [], []],
   currentIndex: 0,
   epochIndex: 0,
+  weekCount: 1,
   internval: undefined,
   visitedTopics: {},
   utils: {},
@@ -66,31 +67,28 @@ app.getRandomTopics = () => {
   return shuffledTopics.slice(0, numTopics);
 };
 
-app.generateTimelineVisits = (websites, numVisitsPerEpoch, numEpochs) => {
-  const allEpochs = [];
-  const startDate = new Date();
+app.generateTimelineVisits = (
+  websites,
+  numVisitsPerEpoch,
+  startDate = new Date()
+) => {
+  const visits = [];
+  let currentDateTime = new Date(startDate);
 
-  for (let epoch = 0; epoch < numEpochs; epoch++) {
-    const visits = [];
-    let currentDateTime = new Date(startDate);
-    currentDateTime.setDate(currentDateTime.getDate() + epoch * 7); // Each epoch starts a week apart
+  const incrementMinutes = (7 * 24 * 60) / numVisitsPerEpoch; // Total minutes in a week divided by visits per epoch
 
-    const incrementMinutes = (7 * 24 * 60) / numVisitsPerEpoch; // Total minutes in a week divided by visits per epoch
-
-    for (let visit = 0; visit < numVisitsPerEpoch; visit++) {
-      const website = websites[Math.floor(Math.random() * websites.length)];
-      const datetime = app.getIncrementalDateTime(
-        currentDateTime,
-        incrementMinutes
-      );
-      const topics = app.getRandomTopics();
-      visits.push({ website, datetime, topics });
-      currentDateTime = new Date(datetime); // Update currentDateTime for the next visit
-    }
-    allEpochs.push(visits);
+  for (let visit = 0; visit < numVisitsPerEpoch; visit++) {
+    const website = websites[Math.floor(Math.random() * websites.length)];
+    const datetime = app.getIncrementalDateTime(
+      currentDateTime,
+      incrementMinutes
+    );
+    const topics = app.getRandomTopics();
+    visits.push({ website, datetime, topics });
+    currentDateTime = new Date(datetime); // Update currentDateTime for the next visit
   }
 
-  return allEpochs;
+  return visits;
 };
 
 app.getTopicColors = () => ({
@@ -209,8 +207,13 @@ app.setupInterval = () => {
 
           clear();
           app.epochIndex++;
+          app.weekCount++;
+          const nextStartDate = new Date(
+            config.timeline.circles[app.epochIndex - 1][7].datetime
+          );
+          nextStartDate.setDate(nextStartDate.getDate() + 1);
           config.timeline.circles.push(
-            app.generateTimelineVisits(websites, 8, 1)[0]
+            app.generateTimelineVisits(websites, 8, nextStartDate)
           );
 
           if (config.timeline.circles.length > 3) {
@@ -219,10 +222,10 @@ app.setupInterval = () => {
           }
 
           if (app.epochIndex >= 2) {
-            app.moveEpochTimeline(app.epochIndex - 2, 500);
+            app.moveEpochTimeline(app.epochIndex - 2, 500, app.weekCount - 2);
           }
-          app.moveEpochTimeline(app.epochIndex - 1, 250);
-          app.drawEpoch(app.epochIndex);
+          app.moveEpochTimeline(app.epochIndex - 1, 250, app.weekCount - 1);
+          app.drawEpoch(app.epochIndex, app.weekCount);
         }, 1000);
       }
     }
@@ -237,13 +240,21 @@ app.handlePlayPauseButttons = () => {
   app.pauseButton.addEventListener('click', app.pause);
 };
 
-app.drawTimeline = ({ position, circleProps, circles }, epochIndex) => {
-  console.log(epochIndex);
+app.drawTimeline = (
+  { position, circleProps, circles },
+  epochIndex,
+  weekCount
+) => {
   const { diameter, verticalSpacing } = circleProps;
-  const circleVerticalSpace = verticalSpacing + diameter;
+  const circleVerticalSpace = verticalSpacing - 30 + diameter;
   const leftPadding = position.x - 150;
 
+  textAlign(CENTER, CENTER);
+  textSize(16);
+  text('Epoch Week ' + weekCount, position.x, 25);
+
   textAlign(LEFT, CENTER);
+  textSize(12);
 
   // Draw circles and text at the timeline position
   circles.forEach((circleItem, index) => {
@@ -357,7 +368,7 @@ app.renderUserIcon = (epochIndex, visitIndex) => {
   });
 };
 
-app.moveEpochTimeline = (epochIndex, moveBy) => {
+app.moveEpochTimeline = (epochIndex, moveBy, weekCount) => {
   const epoch = config.timeline.circles[epochIndex];
   const position = {
     x: config.timeline.position.x + moveBy,
@@ -373,7 +384,8 @@ app.moveEpochTimeline = (epochIndex, moveBy) => {
       circleProps: config.timeline.circleProps,
       circles: epoch,
     },
-    epochIndex
+    epochIndex,
+    weekCount
   );
 
   let visitIndex = 0;
@@ -383,7 +395,7 @@ app.moveEpochTimeline = (epochIndex, moveBy) => {
   }
 };
 
-app.drawEpoch = (epochIndex) => {
+app.drawEpoch = (epochIndex, weekCount) => {
   const epoch = config.timeline.circles[epochIndex];
   console.log(epoch);
 
@@ -395,7 +407,8 @@ app.drawEpoch = (epochIndex) => {
       circleProps: config.timeline.circleProps,
       circles: epoch,
     },
-    epochIndex
+    epochIndex,
+    weekCount
   );
   app.handlePlayPauseButttons();
   app.play();
@@ -414,7 +427,7 @@ function preload() {
 }
 
 function setup() {
-  config.timeline.circles = app.generateTimelineVisits(websites, 8, 1);
+  config.timeline.circles = [app.generateTimelineVisits(websites, 8)];
   const circleVerticalSpace =
     config.timeline.circleProps.verticalSpacing +
     config.timeline.circleProps.diameter;
@@ -422,7 +435,7 @@ function setup() {
   canvas.parent('ps-canvas');
   background(245);
 
-  app.drawEpoch(app.epochIndex);
+  app.drawEpoch(app.epochIndex, app.weekCount);
 }
 
 function draw() {
