@@ -28,6 +28,7 @@ joinInterestGroup.setUp = (index) => {
     const {x, y} = flow.calculateXYPostions( index );
 
     if (currentCircle.type !== 'advertiser') {
+        app.joinInterestGroup.joinings.push(null);
         return;
     }
 
@@ -109,7 +110,10 @@ joinInterestGroup.draw = async (index) => {
 
     const _joining = app.joinInterestGroup.joinings[index];
 
-    if (_joining === undefined) {
+    console.log( _joining, '_joining' );
+    console.log( app.joinInterestGroup.joinings, 'app.joinInterestGroup.joinings' )
+
+    if (!_joining) {
         return;
     }
 

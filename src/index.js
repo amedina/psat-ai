@@ -28,16 +28,13 @@ app.init = async (p) => {
 
   app.auction.setupAuctions();
   app.joinInterestGroup.setupJoinings();
-
-  await app.joinInterestGroup.draw(0);
-  await app.auction.draw(0);
 }
 
 app.play = () => {
   app.playButton.classList.add('hidden');
   app.pauseButton.classList.remove('hidden');
   app.timeline.isPaused = false;
-  app.setupInterval();
+  app.setupLoop();
 }
 
 app.pause = () => {
@@ -47,13 +44,17 @@ app.pause = () => {
   app.utils.clearRequestInterval(app.timeline.internval);
 }
 
-app.setupInterval = () => {
-  app.timeline.internval = app.utils.requestInterval(() => {
-    if (!app.timeline.isPaused) {
-      app.timeline.renderUserIcon();
-      app.timeline.currentIndex++;
-    }
-  }, config.timeline.stepDelay);
+app.setupLoop = async () => {
+  while (!app.timeline.isPaused && app.timeline.currentIndex < config.timeline.circles.length) {
+    app.timeline.renderUserIcon();
+    await app.drawFlows(app.timeline.currentIndex);
+    app.timeline.currentIndex++;
+  }
+}
+
+app.drawFlows = async (index) => {
+  await app.joinInterestGroup.draw(index);
+  await app.auction.draw(index);
 }
 
 app.handlePlayPauseButttons = () => {
@@ -75,7 +76,7 @@ const sketch = (p) => {
 
     (async () => {
       await app.init(p);
-      // app.play();
+      app.play();
     })();
   };
 

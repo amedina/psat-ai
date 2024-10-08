@@ -30,6 +30,7 @@ auction.setUp = (index) => {
     const {x, y} = flow.calculateXYPostions( index );
 
     if (currentCircle.type !== 'publisher') {
+        app.auction.auctions.push(null);
         return;
     }
 
@@ -121,7 +122,7 @@ auction.draw = async (index) => {
 
     const _auction = app.auction.auctions[index];
 
-    if (_auction === undefined) {
+    if (!_auction) {
         return;
     }
 
