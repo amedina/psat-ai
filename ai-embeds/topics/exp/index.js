@@ -122,7 +122,8 @@ app.calculateMaxSiteWidth = (epochIndex) => {
   let maxWidth = 0;
 
   Object.values(topicSites).forEach((sites) => {
-    const siteText = sites.join(', ');
+    const uniqueSites = [...new Set(sites)];
+    const siteText = uniqueSites.join(', ');
     const textWidthValue = textWidth(siteText);
     if (textWidthValue > maxWidth) {
       maxWidth = textWidthValue;
@@ -130,6 +131,16 @@ app.calculateMaxSiteWidth = (epochIndex) => {
   });
 
   return maxWidth;
+};
+
+app.calculateTopicCounts = (epochIndex) => {
+  const topicCounts = {};
+
+  Object.keys(app.visitedTopics[epochIndex]).forEach((topic) => {
+    topicCounts[topic] = app.visitedTopics[epochIndex][topic].length;
+  });
+
+  return topicCounts;
 };
 
 app.drawTable = (epochIndex, weekCount, position = undefined) => {
@@ -151,7 +162,7 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
   rect(
     tableOffsetX,
     tableOffsetY,
-    Math.max(colWidth + maxSiteWidth * 1.75, 300),
+    Math.max(2 * colWidth + maxSiteWidth * 1.75, 400),
     numRows * rowHeight + 40
   );
 
@@ -159,11 +170,12 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
   fill(0);
 
   text('Topic', tableOffsetX + 10, tableOffsetY + 20);
-  text('Sites', tableOffsetX + colWidth + 10, tableOffsetY + 20);
+  text('Count', tableOffsetX + colWidth + 10, tableOffsetY + 20);
+  text('Sites', tableOffsetX + 2 * colWidth + 10, tableOffsetY + 20);
   line(
     tableOffsetX,
     tableOffsetY + 40,
-    tableOffsetX + Math.max(colWidth + maxSiteWidth * 1.75, 300),
+    tableOffsetX + Math.max(2 * colWidth + maxSiteWidth * 1.75, 400),
     tableOffsetY + 40
   );
 
@@ -174,13 +186,19 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
 
     fill(0);
     text(topic, tableOffsetX + 10, y);
-    const sortedSites = app.visitedTopics[epochIndex][topic].slice().sort();
-    text(sortedSites.join(', '), tableOffsetX + colWidth + 10, y);
+
+    const topicCounts = app.calculateTopicCounts(epochIndex);
+    text(topicCounts[topic] || 0, tableOffsetX + colWidth + 10, y);
+
+    const sortedSites = [
+      ...new Set(app.visitedTopics[epochIndex][topic].slice().sort()),
+    ];
+    text(sortedSites.join(', '), tableOffsetX + 2 * colWidth + 10, y);
 
     line(
       tableOffsetX,
       y + 10,
-      tableOffsetX + Math.max(colWidth + maxSiteWidth * 1.75, 300),
+      tableOffsetX + Math.max(2 * colWidth + maxSiteWidth * 1.75, 400),
       y + 10
     );
   });
@@ -189,6 +207,13 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
     tableOffsetX + colWidth,
     tableOffsetY,
     tableOffsetX + colWidth,
+    tableOffsetY + numRows * rowHeight + 40
+  );
+
+  line(
+    tableOffsetX + 2 * colWidth,
+    tableOffsetY,
+    tableOffsetX + 2 * colWidth,
     tableOffsetY + numRows * rowHeight + 40
   );
 
@@ -367,9 +392,8 @@ app.renderUserIcon = (epochIndex, visitIndex) => {
     if (!app.visitedTopics[epochIndex][topic]) {
       app.visitedTopics[epochIndex][topic] = [];
     }
-    if (!app.visitedTopics[epochIndex][topic].includes(currentSite)) {
-      app.visitedTopics[epochIndex][topic].push(currentSite);
-    }
+
+    app.visitedTopics[epochIndex][topic].push(currentSite);
   });
 };
 
