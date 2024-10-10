@@ -26,17 +26,9 @@ const app = {
   internval: undefined,
   visitedTopics: [[], [], []],
   topicsVisitCount: [{}, {}, {}],
+  siteAdtechs: {},
   utils: {},
 };
-
-const topics = [
-  'sports',
-  'news',
-  'entertainment',
-  'technology',
-  'health',
-  'science',
-];
 
 const websites = [
   'example-news.com',
@@ -107,7 +99,7 @@ const adtechs = [
   'LiveRamp',
 ];
 
-const assignAdtechsToSites = (sites, adtechs) => {
+app.assignAdtechsToSites = (sites, adtechs) => {
   const siteAdtechs = {};
   sites.forEach((site) => {
     const numAdtechs = Math.floor(Math.random() * 3) + 1; // Random number between 1 and 3
@@ -122,8 +114,6 @@ const assignAdtechsToSites = (sites, adtechs) => {
   });
   return siteAdtechs;
 };
-
-const siteAdtechs = assignAdtechsToSites(websites, adtechs);
 
 app.getAdtechsColors = () => ({
   GoogleAds: color(255, 99, 71), // Tomato
@@ -170,15 +160,6 @@ app.pause = () => {
   clearInterval(app.internval);
 };
 
-app.getTopicColors = () => ({
-  sports: color(255, 99, 71), // Tomato
-  news: color(135, 206, 235), // Sky Blue
-  entertainment: color(255, 182, 193), // Light Pink
-  technology: color(100, 149, 237), // Cornflower Blue
-  health: color(144, 238, 144), // Light Green
-  science: color(255, 160, 122), // Light Salmon
-});
-
 app.getWebsiteToTopic = (website) => {
   return [websiteToTopicMapping[website]];
 };
@@ -211,6 +192,209 @@ app.generateTimelineVisits = (
   }
 
   return visits;
+};
+
+app.startNextEpoch = () => {
+  setTimeout(() => {
+    app.currentIndex = 0;
+
+    clear();
+    app.epochIndex++;
+    app.weekCount++;
+    const length = config.timeline.circles.length;
+    const nextStartDate = new Date(
+      config.timeline.circles[app.epochIndex - 1][length - 1].datetime
+    );
+    nextStartDate.setDate(nextStartDate.getDate() + 1);
+    config.timeline.circles.push(
+      app.generateTimelineVisits(websites, 6, nextStartDate)
+    );
+
+    if (config.timeline.circles.length > 3) {
+      config.timeline.circles.shift();
+      app.visitedTopics.push([]);
+      app.visitedTopics.shift();
+      app.topicsVisitCount.push([]);
+      app.topicsVisitCount.shift();
+      app.epochIndex = 2;
+    }
+
+    if (app.epochIndex >= 2) {
+      app.moveEpochTimeline(app.epochIndex - 2, 500, app.weekCount - 2);
+      app.drawTable(app.epochIndex - 2, app.weekCount - 2, {
+        y: config.timeline.position.y + 600,
+      });
+    }
+    app.moveEpochTimeline(app.epochIndex - 1, 250, app.weekCount - 1);
+    app.drawTable(app.epochIndex - 1, app.weekCount - 1, {
+      y: config.timeline.position.y + 300,
+    });
+
+    app.drawEpoch(app.epochIndex, app.weekCount);
+    app.drawTable(app.epochIndex, app.weekCount);
+  }, 1000);
+};
+
+app.setupInterval = () => {
+  app.internval = setInterval(() => {
+    if (!app.isPaused) {
+      app.handleUserVisit(app.epochIndex, app.currentIndex);
+      app.drawTable(app.epochIndex, app.weekCount);
+
+      app.currentIndex++;
+      if (app.currentIndex >= config.timeline.circles[app.epochIndex].length) {
+        clearInterval(app.internval);
+
+        app.startNextEpoch();
+      }
+    }
+  }, config.timeline.stepDelay);
+};
+
+app.drawTimelineKiLine = (position) => {
+  const { diameter, verticalSpacing } = config.timeline.circleProps;
+  const circleVerticalSpace = verticalSpacing + diameter;
+
+  line(position.x, position.y, position.x, circleVerticalSpace * 8);
+};
+
+app.drawTimeline = (
+  { position, circleProps, circles },
+  epochIndex,
+  weekCount
+) => {
+  const { diameter, verticalSpacing } = circleProps;
+  const circleVerticalSpace = verticalSpacing - 30 + diameter;
+  const leftPadding = position.x - 150;
+
+  textAlign(CENTER, CENTER);
+  textSize(16);
+  text('Epoch Week ' + weekCount, position.x, 25);
+
+  textAlign(LEFT, CENTER);
+  textSize(12);
+
+  // Draw circles and text at the timeline position
+  circles.forEach((circleItem, index) => {
+    const yPosition = verticalSpacing + circleVerticalSpace * index;
+
+    app.circlePositions[epochIndex].push({ x: position.x, y: yPosition });
+    app.drawCircle(epochIndex, index);
+
+    text(circleItem.datetime, leftPadding, yPosition);
+    text(circleItem.website, leftPadding, yPosition + 20);
+    text(circleItem.topics.join(', '), leftPadding, yPosition + 40);
+
+    // Draw line leading out of the circle
+    line(position.x - 25, yPosition, position.x - 40, yPosition);
+  });
+};
+
+app.drawCircle = (epoch, index) => {
+  const position = app.circlePositions[epoch][index];
+  const { diameter } = config.timeline.circleProps;
+
+  circle(position.x, position.y, diameter);
+};
+
+app.drawSmallCircles = (epoch, index, currentSite) => {
+  const position = app.circlePositions[epoch][index];
+  const { diameter } = config.timeline.circleProps;
+  const smallCircleDiameter = diameter / 5;
+
+  const distanceFromEdge = 6;
+
+  const adTechs = app.siteAdtechs[currentSite];
+  const numSmallCircles = adTechs.length;
+
+  const smallCirclePositions = [];
+
+  for (let i = 0; i < numSmallCircles; i++) {
+    let randomX, randomY, isOverlapping;
+
+    do {
+      const angle = Math.random() * 2 * Math.PI;
+
+      randomX =
+        position.x + (diameter / 2 + distanceFromEdge) * Math.cos(angle);
+      randomY =
+        position.y + (diameter / 2 + distanceFromEdge) * Math.sin(angle);
+
+      isOverlapping = smallCirclePositions.some((pos) => {
+        const dx = pos.x - randomX;
+        const dy = pos.y - randomY;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        return distance < smallCircleDiameter;
+      });
+    } while (isOverlapping);
+
+    smallCirclePositions.push({ x: randomX, y: randomY });
+
+    const adTechColor = app.getAdtechsColors()[adTechs[i]];
+
+    push();
+    fill(adTechColor);
+    circle(randomX, randomY, smallCircleDiameter);
+    pop();
+  }
+};
+
+app.renderUser = (epochIndex, visitIndex) => {
+  if (epochIndex >= config.timeline.circles.length) {
+    app.pause();
+    return;
+  }
+
+  const circlePosition = app.circlePositions[epochIndex][visitIndex];
+
+  if (circlePosition === undefined) {
+    return;
+  }
+
+  const user = config.timeline.user;
+
+  if (visitIndex > 0) {
+    app.drawCircle(epochIndex, visitIndex - 1);
+  }
+
+  image(
+    userIcon,
+    circlePosition.x - user.width / 2,
+    circlePosition.y - user.height / 2,
+    user.width,
+    user.height
+  );
+
+  const currentCircle = config.timeline.circles[epochIndex][visitIndex];
+  const currentSite = currentCircle.website;
+
+  app.drawSmallCircles(epochIndex, visitIndex, currentSite);
+};
+
+app.handleUserVisit = (epochIndex, visitIndex) => {
+  app.renderUser(epochIndex, visitIndex);
+
+	const currentCircle = config.timeline.circles[epochIndex][visitIndex];
+	const currentSite = currentCircle.website;
+  currentCircle.topics.forEach((topic) => {
+    if (!app.visitedTopics[epochIndex][topic]) {
+      app.visitedTopics[epochIndex][topic] = [];
+    }
+
+    app.visitedTopics[epochIndex][topic].push(...app.siteAdtechs[currentSite]);
+  });
+
+  currentCircle.topics.forEach((topic) => {
+    if (!app.topicsVisitCount[epochIndex]) {
+      app.topicsVisitCount[epochIndex] = {};
+    }
+
+    if (!app.topicsVisitCount[epochIndex][topic]) {
+      app.topicsVisitCount[epochIndex][topic] = 0;
+    }
+
+    app.topicsVisitCount[epochIndex][topic]++;
+  });
 };
 
 app.calculateMaxSiteWidth = (epochIndex) => {
@@ -287,9 +471,14 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
       // text(sortedAdTechs.join(', '), tableOffsetX + 2 * colWidth + 10, y);
       let widthTracker = 0;
       for (let i = 0; i < sortedAdTechs.length; i++) {
-				const textWidthValue = textWidth(sortedAdTechs[i]);
+        const textWidthValue = textWidth(sortedAdTechs[i]);
         fill(app.getAdtechsColors()[sortedAdTechs[i]]);
-        rect(tableOffsetX + 2 * colWidth + 5 + widthTracker, y - 15, textWidthValue + 10, 25);
+        rect(
+          tableOffsetX + 2 * colWidth + 5 + widthTracker,
+          y - 15,
+          textWidthValue + 10,
+          25
+        );
         fill(255);
         text(
           sortedAdTechs[i],
@@ -325,200 +514,6 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
   pop();
 };
 
-app.setupInterval = () => {
-  app.internval = setInterval(() => {
-    if (!app.isPaused) {
-      app.renderUserIcon(app.epochIndex, app.currentIndex);
-      app.drawTable(app.epochIndex, app.weekCount);
-
-      app.currentIndex++;
-      if (app.currentIndex >= config.timeline.circles[app.epochIndex].length) {
-        clearInterval(app.internval);
-
-        setTimeout(() => {
-          app.currentIndex = 0;
-
-          clear();
-          app.epochIndex++;
-          app.weekCount++;
-          const nextStartDate = new Date(
-            config.timeline.circles[app.epochIndex - 1][5].datetime
-          );
-          nextStartDate.setDate(nextStartDate.getDate() + 1);
-          config.timeline.circles.push(
-            app.generateTimelineVisits(websites, 6, nextStartDate)
-          );
-
-          if (config.timeline.circles.length > 3) {
-            config.timeline.circles.shift();
-            app.visitedTopics.push([]);
-            app.visitedTopics.shift();
-            app.topicsVisitCount.push([]);
-            app.topicsVisitCount.shift();
-            app.epochIndex = 2;
-          }
-
-          if (app.epochIndex >= 2) {
-            app.moveEpochTimeline(app.epochIndex - 2, 500, app.weekCount - 2);
-            app.drawTable(app.epochIndex - 2, app.weekCount - 2, {
-              y: config.timeline.position.y + 600,
-            });
-          }
-          app.moveEpochTimeline(app.epochIndex - 1, 250, app.weekCount - 1);
-          app.drawTable(app.epochIndex - 1, app.weekCount - 1, {
-            y: config.timeline.position.y + 300,
-          });
-
-          app.drawEpoch(app.epochIndex, app.weekCount);
-          app.drawTable(app.epochIndex, app.weekCount);
-        }, 1000);
-      }
-    }
-  }, config.timeline.stepDelay);
-};
-
-app.drawTimelineKiLine = (position) => {
-  const { diameter, verticalSpacing } = config.timeline.circleProps;
-  const circleVerticalSpace = verticalSpacing + diameter;
-
-  line(position.x, position.y, position.x, circleVerticalSpace * 8);
-};
-
-app.drawTimeline = (
-  { position, circleProps, circles },
-  epochIndex,
-  weekCount
-) => {
-  const { diameter, verticalSpacing } = circleProps;
-  const circleVerticalSpace = verticalSpacing - 30 + diameter;
-  const leftPadding = position.x - 150;
-
-  textAlign(CENTER, CENTER);
-  textSize(16);
-  text('Epoch Week ' + weekCount, position.x, 25);
-
-  textAlign(LEFT, CENTER);
-  textSize(12);
-
-  // Draw circles and text at the timeline position
-  circles.forEach((circleItem, index) => {
-    const yPosition = verticalSpacing + circleVerticalSpace * index;
-
-    app.circlePositions[epochIndex].push({ x: position.x, y: yPosition });
-    app.drawCircle(epochIndex, index);
-
-    text(circleItem.datetime, leftPadding, yPosition);
-    text(circleItem.website, leftPadding, yPosition + 20);
-    text(circleItem.topics.join(', '), leftPadding, yPosition + 40);
-
-    // Draw line leading out of the circle
-    line(position.x - 25, yPosition, position.x - 40, yPosition);
-  });
-};
-
-app.drawCircle = (epoch, index) => {
-  const position = app.circlePositions[epoch][index];
-  const { diameter } = config.timeline.circleProps;
-
-  circle(position.x, position.y, diameter);
-};
-
-app.drawSmallCircles = (epoch, index, currentSite) => {
-  const position = app.circlePositions[epoch][index];
-  const { diameter } = config.timeline.circleProps;
-  const smallCircleDiameter = diameter / 5;
-
-  const distanceFromEdge = 6;
-
-  const adTechs = siteAdtechs[currentSite];
-  const numSmallCircles = adTechs.length;
-
-  const smallCirclePositions = [];
-
-  for (let i = 0; i < numSmallCircles; i++) {
-    let randomX, randomY, isOverlapping;
-
-    do {
-      const angle = Math.random() * 2 * Math.PI;
-
-      randomX =
-        position.x + (diameter / 2 + distanceFromEdge) * Math.cos(angle);
-      randomY =
-        position.y + (diameter / 2 + distanceFromEdge) * Math.sin(angle);
-
-      isOverlapping = smallCirclePositions.some((pos) => {
-        const dx = pos.x - randomX;
-        const dy = pos.y - randomY;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        return distance < smallCircleDiameter;
-      });
-    } while (isOverlapping);
-
-    smallCirclePositions.push({ x: randomX, y: randomY });
-
-    const adTechColor = app.getAdtechsColors()[adTechs[i]];
-
-    push();
-    fill(adTechColor);
-    circle(randomX, randomY, smallCircleDiameter);
-    pop();
-  }
-};
-
-app.renderUserIcon = (epochIndex, visitIndex, skiptopics = false) => {
-  if (epochIndex >= config.timeline.circles.length) {
-    app.pause();
-    return;
-  }
-
-  const circlePosition = app.circlePositions[epochIndex][visitIndex];
-
-  if (circlePosition === undefined) {
-    return;
-  }
-
-  const user = config.timeline.user;
-
-  if (visitIndex > 0) {
-    app.drawCircle(epochIndex, visitIndex - 1);
-  }
-
-  image(
-    userIcon,
-    circlePosition.x - user.width / 2,
-    circlePosition.y - user.height / 2,
-    user.width,
-    user.height
-  );
-
-  const currentCircle = config.timeline.circles[epochIndex][visitIndex];
-  const currentSite = currentCircle.website;
-
-  app.drawSmallCircles(epochIndex, visitIndex, currentSite);
-
-  if (!skiptopics) {
-    currentCircle.topics.forEach((topic) => {
-      if (!app.visitedTopics[epochIndex][topic]) {
-        app.visitedTopics[epochIndex][topic] = [];
-      }
-
-      app.visitedTopics[epochIndex][topic].push(...siteAdtechs[currentSite]);
-    });
-
-    currentCircle.topics.forEach((topic) => {
-      if (!app.topicsVisitCount[epochIndex]) {
-        app.topicsVisitCount[epochIndex] = {};
-      }
-
-      if (!app.topicsVisitCount[epochIndex][topic]) {
-        app.topicsVisitCount[epochIndex][topic] = 0;
-      }
-
-      app.topicsVisitCount[epochIndex][topic]++;
-    });
-  }
-};
-
 app.moveEpochTimeline = (epochIndex, moveBy, weekCount) => {
   const epoch = config.timeline.circles[epochIndex];
   const position = {
@@ -541,7 +536,7 @@ app.moveEpochTimeline = (epochIndex, moveBy, weekCount) => {
 
   let visitIndex = 0;
   while (visitIndex < epoch.length) {
-    app.renderUserIcon(epochIndex, visitIndex, true);
+    app.renderUser(epochIndex, visitIndex);
     visitIndex++;
   }
 };
@@ -579,6 +574,7 @@ function preload() {
 
 function setup() {
   config.timeline.circles = [app.generateTimelineVisits(websites, 6)];
+  app.siteAdtechs = app.assignAdtechsToSites(websites, adtechs);
   const circleVerticalSpace =
     config.timeline.circleProps.verticalSpacing +
     config.timeline.circleProps.diameter;
