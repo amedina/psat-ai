@@ -1,6 +1,6 @@
 const config = {
   canvas: {
-    width: 1600,
+    width: 2000,
   },
   timeline: {
     position: { x: 160, y: 100 },
@@ -25,6 +25,7 @@ const app = {
   weekCount: 1,
   internval: undefined,
   visitedTopics: [[], [], []],
+  topicsVisitCount: [{}, {}, {}],
   utils: {},
 };
 
@@ -38,17 +39,114 @@ const topics = [
 ];
 
 const websites = [
-  'adv1.com',
-  'adv2.com',
-  'pub1.com',
-  'adv3.com',
-  'adv5.com',
-  'pub2.com',
-  'adv6.com',
-  'adv7.com',
-  'pub3.com',
-  'adv8.com',
+  'example-news.com',
+  'tech-insights.com',
+  'daily-sports.com',
+  'health-today.com',
+  'travel-guide.com',
+  'foodie-heaven.com',
+  'fashion-hub.com',
+  'business-world.com',
+  'education-portal.com',
+  'entertainment-zone.com',
+  'global-news.com',
+  'tech-trends.com',
+  'sports-daily.com',
+  'wellness-today.com',
+  'world-traveler.com',
+  'gourmet-paradise.com',
+  'style-hub.com',
+  'finance-world.com',
+  'learning-portal.com',
+  'fun-zone.com',
 ];
+
+const websiteToTopicMapping = {
+  'example-news.com': 'news',
+  'tech-insights.com': 'technology',
+  'daily-sports.com': 'sports',
+  'health-today.com': 'health',
+  'travel-guide.com': 'travel',
+  'foodie-heaven.com': 'food',
+  'fashion-hub.com': 'fashion',
+  'business-world.com': 'business',
+  'education-portal.com': 'education',
+  'entertainment-zone.com': 'entertainment',
+  'global-news.com': 'news',
+  'tech-trends.com': 'technology',
+  'sports-daily.com': 'sports',
+  'wellness-today.com': 'health',
+  'world-traveler.com': 'travel',
+  'gourmet-paradise.com': 'food',
+  'style-hub.com': 'fashion',
+  'finance-world.com': 'business',
+  'learning-portal.com': 'education',
+  'fun-zone.com': 'entertainment',
+};
+
+const adtechs = [
+  'GoogleAds',
+  'FacebookAds',
+  'AmazonAds',
+  'TradeDesk',
+  'AdobeAdvertising',
+  'MediaMath',
+  'AppNexus',
+  'Criteo',
+  'PubMatic',
+  'VerizonMedia',
+  'Taboola',
+  'Outbrain',
+  'AdRoll',
+  'Quantcast',
+  'RocketFuel',
+  'Sizmek',
+  'Choozle',
+  'Centro',
+  'ZetaGlobal',
+  'LiveRamp',
+];
+
+const assignAdtechsToSites = (sites, adtechs) => {
+  const siteAdtechs = {};
+  sites.forEach((site) => {
+    const numAdtechs = Math.floor(Math.random() * 3) + 1; // Random number between 1 and 3
+    const assignedAdtechs = [];
+    for (let i = 0; i < numAdtechs; i++) {
+      const randomAdtech = adtechs[Math.floor(Math.random() * adtechs.length)];
+      if (!assignedAdtechs.includes(randomAdtech)) {
+        assignedAdtechs.push(randomAdtech);
+      }
+    }
+    siteAdtechs[site] = assignedAdtechs;
+  });
+  return siteAdtechs;
+};
+
+const siteAdtechs = assignAdtechsToSites(websites, adtechs);
+
+app.getAdtechsColors = () => ({
+  GoogleAds: color(255, 99, 71), // Tomato
+  FacebookAds: color(135, 206, 250), // Light Sky Blue
+  AmazonAds: color(255, 182, 193), // Light Pink
+  TradeDesk: color(100, 149, 237), // Cornflower Blue
+  AdobeAdvertising: color(144, 238, 144), // Light Green
+  MediaMath: color(255, 160, 122), // Light Salmon
+  AppNexus: color(255, 215, 0), // Gold
+  Criteo: color(0, 255, 255), // Cyan
+  PubMatic: color(255, 105, 180), // Hot Pink
+  VerizonMedia: color(255, 165, 0), // Orange
+  Taboola: color(0, 0, 255), // Blue
+  Outbrain: color(0, 255, 0), // Lime
+  AdRoll: color(255, 0, 0), // Red
+  Quantcast: color(128, 0, 128), // Purple
+  RocketFuel: color(0, 0, 0), // Black
+  Sizmek: color(255, 140, 0), // Dark Orange
+  Choozle: color(128, 128, 128), // Gray
+  Centro: color(128, 0, 0), // Maroon
+  ZetaGlobal: color(0, 128, 0), // Green
+  LiveRamp: color(0, 128, 128), // Teal
+});
 
 app.handlePlayPauseButttons = () => {
   app.playButton = document.getElementById('play');
@@ -81,10 +179,8 @@ app.getTopicColors = () => ({
   science: color(255, 160, 122), // Light Salmon
 });
 
-app.getRandomTopics = () => {
-  const numTopics = Math.floor(Math.random() * 2) + 2;
-  const shuffledTopics = topics.sort(() => 0.5 - Math.random());
-  return shuffledTopics.slice(0, numTopics);
+app.getWebsiteToTopic = (website) => {
+  return [websiteToTopicMapping[website]];
 };
 
 app.getIncrementalDateTime = (startDate, incrementMinutes) => {
@@ -109,7 +205,7 @@ app.generateTimelineVisits = (
       currentDateTime,
       incrementMinutes
     );
-    const topics = app.getRandomTopics();
+    const topics = app.getWebsiteToTopic(website);
     visits.push({ website, datetime, topics });
     currentDateTime = new Date(datetime); // Update currentDateTime for the next visit
   }
@@ -133,16 +229,6 @@ app.calculateMaxSiteWidth = (epochIndex) => {
   return maxWidth;
 };
 
-app.calculateTopicCounts = (epochIndex) => {
-  const topicCounts = {};
-
-  Object.keys(app.visitedTopics[epochIndex]).forEach((topic) => {
-    topicCounts[topic] = app.visitedTopics[epochIndex][topic].length;
-  });
-
-  return topicCounts;
-};
-
 app.drawTable = (epochIndex, weekCount, position = undefined) => {
   const topics = Object.keys(app.visitedTopics[epochIndex]);
   const numRows = topics.length;
@@ -151,7 +237,6 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
   const tableOffsetX = position?.x || 800;
   const tableOffsetY = position?.y || 50;
   const maxSiteWidth = app.calculateMaxSiteWidth(epochIndex);
-  const topicColors = app.getTopicColors();
 
   push();
   textSize(16);
@@ -171,7 +256,7 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
 
   text('Topic', tableOffsetX + 10, tableOffsetY + 20);
   text('Count', tableOffsetX + colWidth + 10, tableOffsetY + 20);
-  text('Sites', tableOffsetX + 2 * colWidth + 10, tableOffsetY + 20);
+  text('Ad Techs', tableOffsetX + 2 * colWidth + 10, tableOffsetY + 20);
   line(
     tableOffsetX,
     tableOffsetY + 40,
@@ -179,29 +264,49 @@ app.drawTable = (epochIndex, weekCount, position = undefined) => {
     tableOffsetY + 40
   );
 
-  topics.forEach((topic, index) => {
-    const y = (index + 1) * rowHeight + tableOffsetY + 30;
-    fill(topicColors[topic]);
-    rect(tableOffsetX, y - 20, colWidth, rowHeight);
+  topics
+    .sort(
+      (a, b) =>
+        app.topicsVisitCount[epochIndex][b] -
+        app.topicsVisitCount[epochIndex][a]
+    )
+    .forEach((topic, index) => {
+      const y = (index + 1) * rowHeight + tableOffsetY + 30;
+      fill(255);
+      rect(tableOffsetX, y - 20, colWidth, rowHeight);
 
-    fill(0);
-    text(topic, tableOffsetX + 10, y);
+      fill(0);
+      text(topic, tableOffsetX + 10, y);
 
-    const topicCounts = app.calculateTopicCounts(epochIndex);
-    text(topicCounts[topic] || 0, tableOffsetX + colWidth + 10, y);
+      const topicCounts = app.topicsVisitCount[epochIndex];
+      text(topicCounts[topic] || 0, tableOffsetX + colWidth + 10, y);
 
-    const sortedSites = [
-      ...new Set(app.visitedTopics[epochIndex][topic].slice().sort()),
-    ];
-    text(sortedSites.join(', '), tableOffsetX + 2 * colWidth + 10, y);
+      const sortedAdTechs = [
+        ...new Set(app.visitedTopics[epochIndex][topic].slice().sort()),
+      ];
+      // text(sortedAdTechs.join(', '), tableOffsetX + 2 * colWidth + 10, y);
+      let widthTracker = 0;
+      for (let i = 0; i < sortedAdTechs.length; i++) {
+				const textWidthValue = textWidth(sortedAdTechs[i]);
+        fill(app.getAdtechsColors()[sortedAdTechs[i]]);
+        rect(tableOffsetX + 2 * colWidth + 5 + widthTracker, y - 15, textWidthValue + 10, 25);
+        fill(255);
+        text(
+          sortedAdTechs[i],
+          tableOffsetX + 2 * colWidth + 10 + widthTracker,
+          y
+        );
 
-    line(
-      tableOffsetX,
-      y + 10,
-      tableOffsetX + Math.max(2 * colWidth + maxSiteWidth * 1.75, 400),
-      y + 10
-    );
-  });
+        widthTracker += textWidthValue + 20;
+      }
+
+      line(
+        tableOffsetX,
+        y + 10,
+        tableOffsetX + Math.max(2 * colWidth + maxSiteWidth * 1.75, 400),
+        y + 10
+      );
+    });
 
   line(
     tableOffsetX + colWidth,
@@ -248,6 +353,8 @@ app.setupInterval = () => {
             config.timeline.circles.shift();
             app.visitedTopics.push([]);
             app.visitedTopics.shift();
+            app.topicsVisitCount.push([]);
+            app.topicsVisitCount.shift();
             app.epochIndex = 2;
           }
 
@@ -302,6 +409,7 @@ app.drawTimeline = (
 
     text(circleItem.datetime, leftPadding, yPosition);
     text(circleItem.website, leftPadding, yPosition + 20);
+    text(circleItem.topics.join(', '), leftPadding, yPosition + 40);
 
     // Draw line leading out of the circle
     line(position.x - 25, yPosition, position.x - 40, yPosition);
@@ -315,15 +423,15 @@ app.drawCircle = (epoch, index) => {
   circle(position.x, position.y, diameter);
 };
 
-app.drawSmallCircles = (epoch, index) => {
+app.drawSmallCircles = (epoch, index, currentSite) => {
   const position = app.circlePositions[epoch][index];
   const { diameter } = config.timeline.circleProps;
   const smallCircleDiameter = diameter / 5;
 
   const distanceFromEdge = 6;
 
-  const topics = config.timeline.circles[epoch][index].topics;
-  const numSmallCircles = topics.length;
+  const adTechs = siteAdtechs[currentSite];
+  const numSmallCircles = adTechs.length;
 
   const smallCirclePositions = [];
 
@@ -348,17 +456,16 @@ app.drawSmallCircles = (epoch, index) => {
 
     smallCirclePositions.push({ x: randomX, y: randomY });
 
-    const topic = topics[i];
-    const topicColor = app.getTopicColors()[topic];
+    const adTechColor = app.getAdtechsColors()[adTechs[i]];
 
     push();
-    fill(topicColor);
+    fill(adTechColor);
     circle(randomX, randomY, smallCircleDiameter);
     pop();
   }
 };
 
-app.renderUserIcon = (epochIndex, visitIndex) => {
+app.renderUserIcon = (epochIndex, visitIndex, skiptopics = false) => {
   if (epochIndex >= config.timeline.circles.length) {
     app.pause();
     return;
@@ -383,18 +490,33 @@ app.renderUserIcon = (epochIndex, visitIndex) => {
     user.width,
     user.height
   );
-  app.drawSmallCircles(epochIndex, visitIndex);
 
   const currentCircle = config.timeline.circles[epochIndex][visitIndex];
   const currentSite = currentCircle.website;
 
-  currentCircle.topics.forEach((topic) => {
-    if (!app.visitedTopics[epochIndex][topic]) {
-      app.visitedTopics[epochIndex][topic] = [];
-    }
+  app.drawSmallCircles(epochIndex, visitIndex, currentSite);
 
-    app.visitedTopics[epochIndex][topic].push(currentSite);
-  });
+  if (!skiptopics) {
+    currentCircle.topics.forEach((topic) => {
+      if (!app.visitedTopics[epochIndex][topic]) {
+        app.visitedTopics[epochIndex][topic] = [];
+      }
+
+      app.visitedTopics[epochIndex][topic].push(...siteAdtechs[currentSite]);
+    });
+
+    currentCircle.topics.forEach((topic) => {
+      if (!app.topicsVisitCount[epochIndex]) {
+        app.topicsVisitCount[epochIndex] = {};
+      }
+
+      if (!app.topicsVisitCount[epochIndex][topic]) {
+        app.topicsVisitCount[epochIndex][topic] = 0;
+      }
+
+      app.topicsVisitCount[epochIndex][topic]++;
+    });
+  }
 };
 
 app.moveEpochTimeline = (epochIndex, moveBy, weekCount) => {
@@ -419,7 +541,7 @@ app.moveEpochTimeline = (epochIndex, moveBy, weekCount) => {
 
   let visitIndex = 0;
   while (visitIndex < epoch.length) {
-    app.renderUserIcon(epochIndex, visitIndex);
+    app.renderUserIcon(epochIndex, visitIndex, true);
     visitIndex++;
   }
 };
