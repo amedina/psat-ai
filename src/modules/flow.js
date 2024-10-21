@@ -73,6 +73,31 @@ flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '') => {
                     resolve(); // Resolve the promise once the interval is cleared
                 }
 
+                if (text) {
+                    p.textSize(config.canvas.fontSize - 2);
+                    p.text(text, x1 - (text.startsWith('$') ? 10 : width/2), y1 + height / 2);
+                    p.textSize(config.canvas.fontSize); // Reset.
+                }
+
+                // Draw the progressing line vertically
+                p.line(x1, y1, x2, _y2);
+
+                // Draw the arrow in the correct direction
+                utils.drawArrow(arrowSize, x1, _y2, direction); // Draw new arrow
+            }else if (direction === 'up') {
+                _y2 = _y2 - incrementBy;
+                // Check if the line has reached the target length for vertical direction
+                if ((y1 - _y2) > height) {
+                    clearInterval(app.flow.intervals['progressline']);
+                    resolve(); // Resolve the promise once the interval is cleared
+                }
+
+                if (text) {
+                    p.textSize(config.canvas.fontSize - 2);
+                    p.text(text, x1 + (text.startsWith('$') ? 10 : width/2), y1 - height / 2);
+                    p.textSize(config.canvas.fontSize); // Reset.
+                }
+
                 // Draw the progressing line vertically
                 p.line(x1, y1, x2, _y2);
 
@@ -89,13 +114,11 @@ flow.calculateXYPostions = (index) => {
     const { lineWidth } = config.flow;
 
     // Calculate (x, y) coordinates
-    const circleNumber = index + 1;
     const spaceFromTimeline = lineWidth + diameter / 2;
-    const x = position.x + spaceFromTimeline;
-    const circleRadius = diameter / 2;
-    const circleHeights = diameter * circleNumber - circleRadius;
-    const circleVerticalHeights = verticalSpacing * (circleNumber - 1) - verticalSpacing / 2;
-    const y = position.y / 2 + circleHeights + circleVerticalHeights;
+    const circleVerticalSpace = verticalSpacing + diameter;
+
+    const y = position.y + spaceFromTimeline + circleVerticalSpace;
+    const x = position.x + diameter / 2 + circleVerticalSpace * index;
 
     return { x, y };
 }
@@ -108,7 +131,7 @@ flow.createOverrideBox = (x1, y1, x2, height) => {
     let width = x2 - x1;
     
     // Calculate the top y-position for the rectangle
-    let topY = y1 - height / 2;
+    let topY = y1 + height / 2;
 
     // Draw the rectangle
     p.push();

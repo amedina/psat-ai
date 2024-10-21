@@ -70,7 +70,7 @@ app.handlePlayPauseButttons = () => {
 const sketch = (p) => {
   p.setup = () => {
     const circleVerticalSpace = config.timeline.circleProps.verticalSpacing + config.timeline.circleProps.diameter;
-    const canvas = p.createCanvas(config.canvas.width, circleVerticalSpace * config.timeline.circles.length);
+    const canvas = p.createCanvas(window.innerWidth, circleVerticalSpace * config.timeline.circles.length);
     canvas.parent('ps-canvas');
     p.background(config.canvas.background);
     p.textSize(config.canvas.fontSize);

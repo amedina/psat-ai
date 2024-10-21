@@ -42,6 +42,9 @@ utils.drawArrow = (size, x, y, direction = 'right') => {
     } else if (direction === 'down') {
         _x = x;
         _y = y - 1;
+    }else if (direction === 'up') {
+        _x = x;
+        _y = y + 1;
     }
 
     // Clear previous one.
@@ -68,6 +71,8 @@ utils.triangle = (size, x, y, direction = 'right', color = 'black') => {
         angle = p.radians(180); // Pointing down
     } else if (direction === 'left') {
         angle = p.radians(270); // Pointing down
+    }else if (direction === 'up') {
+        angle = p.radians(360); // Pointing down
     }
 
     // Coordinates of the triangle's vertices
@@ -87,8 +92,10 @@ utils.triangle = (size, x, y, direction = 'right', color = 'black') => {
         p.translate(x + spacing, y);
     } else if (direction === 'left') {
         p.translate(x - spacing, y + spacing);
-    } else {
+    } else if(direction === 'down') {
         p.translate(x, y + spacing);
+    }else{
+        p.translate(x, y - spacing);
     }
 
     // Rotate the triangle based on the angle

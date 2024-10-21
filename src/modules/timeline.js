@@ -21,23 +21,22 @@ timeline.init = () => {
 timeline.drawTimeline = ({ position, circleProps, circles }) => {
     const { diameter, verticalSpacing } = circleProps;
     const circleVerticalSpace = verticalSpacing + diameter;
-    const leftPadding = 10;
     const p = app.p;
-
-    p.textAlign(p.LEFT, p.CENTER);
-
+    p.textAlign(p.CENTER, p.CENTER);
     // Draw circles and text at the timeline position
     circles.forEach((circleItem, index) => {
-        const yPosition = config.timeline.position.y + diameter / 2 + circleVerticalSpace * index;
-
-        app.timeline.circlePositions.push({ x: position.x, y: yPosition });
+        const xPosition = config.timeline.position.x - diameter / 2 + circleVerticalSpace * index;
+        const xPositionForCircle = config.timeline.position.x + diameter / 2 + circleVerticalSpace * index;
+        
+        const yPositionForCircle = position.y + circleVerticalSpace;
+        app.timeline.circlePositions.push({ x: xPositionForCircle, y: yPositionForCircle });
         timeline.drawCircle(index);
 
-        p.text(circleItem.datetime, leftPadding, yPosition);
-        p.text(circleItem.website, leftPadding, yPosition + 20);
+        p.text(circleItem.datetime, xPositionForCircle, position.y);
+        p.text(circleItem.website, xPositionForCircle, position.y + 20);
 
         // Draw line leading out of the circle
-        p.line(position.x - 25, yPosition, position.x - 40, yPosition);
+        p.line(xPositionForCircle, position.y + 30, xPositionForCircle, position.y + 60);
     });
 }
 
@@ -45,8 +44,9 @@ timeline.drawTimelineLine = () => {
     const position = config.timeline.position;
     const { diameter, verticalSpacing } = config.timeline.circleProps;
     const circleVerticalSpace = verticalSpacing + diameter;
+    const yPositonForLine = position.y + circleVerticalSpace;
 
-    app.p.line(position.x, 0, position.x, circleVerticalSpace * config.timeline.circles.length);
+    app.p.line(0, yPositonForLine, circleVerticalSpace * (config.timeline.circles.length + 1), yPositonForLine );
 }
 
 timeline.drawCircle = (index) => {

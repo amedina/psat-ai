@@ -65,8 +65,7 @@ rippleEffect.create = ( rippleX, rippleY ) => {
   // Clear only the area used by the ripples
   p.fill(config.canvas.background);
   p.noStroke();
-  p.rect(rippleX - 1, rippleY - clearHeight / 2 - 200, clearWidth, clearHeight + 400);
-
+  p.rect(rippleX - clearWidth, rippleY + clearHeight / 2 - 201, clearWidth * 2, clearHeight + 400);
   let allComplete = true;
   p.translate(rippleX, rippleY);
 
@@ -86,7 +85,7 @@ rippleEffect.create = ( rippleX, rippleY ) => {
     
     // Increased spacing between ripples
     let spacing = 40;
-    p.arc(0, 0, (ripple.radius + i * spacing) * 2, (ripple.radius + i * spacing) * 2, -p.HALF_PI, p.HALF_PI);
+    p.arc(0, 0, (ripple.radius + i * spacing) * 2, (ripple.radius + i * spacing) * 2, p.TWO_PI, p.PI);
   }
 
   p.pop(); // Restore the original transformation state

@@ -39,13 +39,14 @@ auction.setUp = (index) => {
     // Setup DSP blocks
     _auction.ssp = {
         name: 'SSP',
-        box: { x, y, width: box.width, height: box.height },
+        box: { x: x - box.width / 2, y: y - box.height/2 + 2, width: box.width, height: box.height },
         line: {
-            x1: x - spaceFromTimeline + diameter / 2,
-            y1: y + box.height / 2,
+            x1: x,
+            y1: y - lineHeight * 2,
             x2: x,
-            y2: y + box.height / 2,
-            speed: 0.6
+            y2: y + lineHeight,
+            speed: 0.6,
+            direction: 'down',
         }
     };
 
@@ -53,26 +54,26 @@ auction.setUp = (index) => {
     _auction.dsp = [];
 
     for (let i = 0; i <= 1; i++) {
-        const marginTop = -10;
-        const verticalSpacing = 20;
-        const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
         const title = "DSP " + (i + 1);
+
+        const xForSmallBox = i%2 === 0 ? x - box.width/1.5  : x + box.width/4;
+        const xForSmallBoxLine = i%2 === 0 ? x - box.width/2  : x + box.width/4;
 
         _auction.dsp.push({
             name: title,
             box: {
-                x: x + box.width + lineWidth,
-                y: y + (smallBox.height + verticalSpacing) * i + marginTop,
+                x: xForSmallBox,
+                y: y + box.height/2 + lineHeight + 7,
                 width: smallBox.width,
                 height: smallBox.height
             },
             line: {
-                x1: x + box.width,
-                y1: textYPosition,
-                x2: x + box.width + lineWidth,
-                y2: textYPosition,
+                x1: xForSmallBoxLine + 10,
+                y1: y + box.height/2 + 5,
+                x2: xForSmallBoxLine + 10,
+                y2: y + box.height/2 + lineHeight,
                 speed: 0.05,
-                direction: 'right',
+                direction: 'down',
                 text: ''
             }
         });
@@ -80,12 +81,12 @@ auction.setUp = (index) => {
         _auction.dsp.push({
             name: title,
             line: {
-                x1: x + box.width,
-                y1: textYPosition,
-                x2: x + box.width + lineWidth,
-                y2: textYPosition,
+                x1: xForSmallBoxLine + 20,
+                y1: y + box.height/2 + lineHeight + 5,
+                x2: xForSmallBoxLine + 20,
+                y2: y + box.height/2,
                 speed: 0.05,
-                direction: 'left',
+                direction: 'up',
                 text: `$${ Math.floor(Math.random() * 10) + 1 }`
             }
         });
@@ -97,21 +98,19 @@ auction.setUp = (index) => {
 
     // Setup bottom blocks
     for (let i = 0; i < mediumBoxes.length; i++) {
-        const topHeight = y + box.height;
-        const textXPosition = x + mediumBox.width / 2;
-        const boxYPosition = topHeight + (lineHeight * i) + lineHeight * (i + 1);
         const title = mediumBoxes[i];
+        const boxXPosition = x + box.width / 2 + (mediumBox.width * i) + lineWidth * (i+1);
 
         _auction.bottomFlow.push({
             name: title,
-            box: { x, y: boxYPosition, width: mediumBox.width, height: mediumBox.height },
+            box: { x: boxXPosition, y: y - mediumBox.height / 2 , width: mediumBox.width, height: mediumBox.height },
             line: {
-                x1: textXPosition,
-                y1: boxYPosition - lineHeight,
-                x2: textXPosition,
-                y2: boxYPosition + lineHeight * i - mediumBox.height * i,
+                x1: boxXPosition - lineWidth,
+                y1: y,
+                x2: boxXPosition,
+                y2: y,
                 speed: 0.06,
-                direction: 'down'
+                direction: 'right'
             }
         });
     }
@@ -149,8 +148,8 @@ auction.draw = async (index) => {
     await utils.delay( 500 );
 
     await rippleEffect.start( 
-        _auction.ssp.box.x + config.flow.box.width + 2, 
-        _auction.ssp.box.y + config.flow.box.height / 2
+        _auction.ssp.box.x + config.flow.box.width / 2, 
+        _auction.ssp.box.y + config.flow.box.height + 2,
     );
 
     // Sequentially draw DSP boxes and lines
@@ -178,11 +177,12 @@ auction.draw = async (index) => {
 };
 
 auction.remove = (index) => {
-    const { ssp } = app.auction.auctions[index];
-    const x1 = ssp.line.x1;
-    const y1 = ssp.line.y1 + 100;
-    const x2 = 660;
-    const height = 400;
+    const { dsp, bottomFlow } = app.auction.auctions[index];
+    const x1 = dsp[0]?.box?.x - 10;
+    const y1 = config.timeline.circleProps.diameter/2;
+    const x2 = bottomFlow[1]?.box?.x + config.flow.mediumBox.width;
+
+    const height = config.flow.box.height + config.flow.smallBox.height + config.flow.lineWidth + config.timeline.circleProps.diameter;600
 
     flow.createOverrideBox( x1, y1, x2, height );
 }

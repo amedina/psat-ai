@@ -17,14 +17,10 @@ joinInterestGroup.setupJoinings = () => {
 }
 
 joinInterestGroup.setUp = (index) => {
-    const { circleProps, circles } = config.timeline;
-    const { box, smallBox, lineWidth } = config.flow;
-    const { diameter } = circleProps;
+    const { circles } = config.timeline;
+    const { box, smallBox, lineHeight } = config.flow;
     const currentCircle = circles[index];
     const _joining = {};
-
-    // Calculate (x, y) coordinates
-    const spaceFromTimeline = lineWidth + diameter / 2;
 
     const {x, y} = flow.calculateXYPostions( index );
 
@@ -38,13 +34,14 @@ joinInterestGroup.setUp = (index) => {
 
     _joining.dspTags.push( {
         name: 'DSP Tag',
-        box: { x, y, width: box.width, height: box.height },
+        box: { x: x - box.width / 2, y: y - box.height/2 + 2, width: box.width, height: box.height },
         line: {
-            x1: x - spaceFromTimeline + diameter / 2,
-            y1: y + box.height / 2,
+            x1: x,
+            y1: y - lineHeight * 2,
             x2: x,
-            y2: y + box.height / 2,
+            y2: y + lineHeight,
             speed: 0.6,
+            direction: 'down',
             text: 'joinInterestGroup()'
         }
     });
@@ -52,12 +49,12 @@ joinInterestGroup.setUp = (index) => {
     _joining.dspTags.push( {
         name: 'DSP Tag',
         line: {
-            x1: x - spaceFromTimeline + diameter / 2,
-            y1: y + box.height / 2,
-            x2: x,
-            y2: y + box.height / 2,
+            x1: x + 10,
+            y1: y - box.height / 2,
+            x2: x + 10,
+            y2: y,
             speed: 0.6,
-            direction: 'left',
+            direction: 'up',
             text: 'joinInterestGroup()'
         }
     });
@@ -66,26 +63,26 @@ joinInterestGroup.setUp = (index) => {
     _joining.dsp = [];
 
     for (let i = 0; i <= 1; i++) {
-        const marginTop = -10;
-        const verticalSpacing = 20;
-        const textYPosition = y + smallBox.height / 2 + smallBox.height * i + marginTop + verticalSpacing * i;
         const title = "DSP " + (i + 1);
+
+        const xForSmallBox = i%2 === 0 ? x - box.width/1.5  : x + box.width/4;
+        const xForSmallBoxLine = i%2 === 0 ? x - box.width/2  : x + box.width/4;
 
         _joining.dsp.push({
             name: title,
             box: {
-                x: x + box.width + lineWidth,
-                y: y + (smallBox.height + verticalSpacing) * i + marginTop,
+                x: xForSmallBox,
+                y: y + box.height/2 + lineHeight + 7,
                 width: smallBox.width,
                 height: smallBox.height
             },
             line: {
-                x1: x + box.width,
-                y1: textYPosition,
-                x2: x + box.width + lineWidth,
-                y2: textYPosition,
+                x1: xForSmallBoxLine + 20,
+                y1: y + box.height/2 + 5,
+                x2: xForSmallBoxLine + 20,
+                y2: y + box.height/2 + lineHeight,
                 speed: 0.05,
-                direction: 'right',
+                direction: 'down',
                 text: ''
             }
         });
@@ -93,12 +90,12 @@ joinInterestGroup.setUp = (index) => {
         _joining.dsp.push({
             name: title,
             line: {
-                x1: x + box.width,
-                y1: textYPosition,
-                x2: x + box.width + lineWidth,
-                y2: textYPosition,
+                x1: xForSmallBoxLine + 10,
+                y1: y + box.height/2 + lineHeight + 5,
+                x2: xForSmallBoxLine + 10,
+                y2: y + box.height/2,
                 speed: 0.05,
-                direction: 'left',
+                direction: 'up',
             }
         });
     }
@@ -153,11 +150,11 @@ joinInterestGroup.draw = async (index) => {
 
 joinInterestGroup.remove = (index) => {
     const { dspTags, dsp } = app.joinInterestGroup.joinings[index];
-    const x1 = dspTags[0]?.line?.x1;
-    const y1 = dspTags[0]?.line?.y1;
-    const x2 = dsp[0]?.line?.x1 + config.flow.box.width + config.flow.smallBox.width;
+    const x1 = dsp[0]?.box?.x - 10;
+    const y1 = config.timeline.circleProps.diameter/2;
+    const x2 = dspTags[0]?.box?.x + config.flow.box.width * 2;
 
-    const height = config.flow.box.height + 22;
+    const height = config.flow.box.height + config.flow.smallBox.height + config.flow.lineWidth + config.timeline.circleProps.diameter;
 
     flow.createOverrideBox( x1, y1, x2, height );
 }
