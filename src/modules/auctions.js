@@ -20,14 +20,10 @@ auction.setupAuctions = () => {
 }
 
 auction.setUp = (index) => {
-    const { circleProps, circles } = config.timeline;
+    const { circles } = config.timeline;
     const { box, smallBox, mediumBox, lineWidth, lineHeight } = config.flow;
-    const { diameter } = circleProps;
     const currentCircle = circles[index];
     const _auction = {};
-
-    // Calculate (x, y) coordinates
-    const spaceFromTimeline = lineWidth + diameter / 2;
 
     const {x, y} = flow.calculateXYPostions( index );
 

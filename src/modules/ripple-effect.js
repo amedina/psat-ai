@@ -5,14 +5,7 @@ import app from '../app';
 import config from '../config';
 
 const rippleEffect = {
-    config: {
-        ripples: [],
-        numRipples: 3,
-        maxRadius: 200,
-        time: 4000,
-        speed: 1,
-    },
-    rippled: false,
+    config: config.ripple
 };
 
 rippleEffect.setUp = () => {

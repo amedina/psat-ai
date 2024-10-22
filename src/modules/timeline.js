@@ -25,7 +25,6 @@ timeline.drawTimeline = ({ position, circleProps, circles }) => {
     p.textAlign(p.CENTER, p.CENTER);
     // Draw circles and text at the timeline position
     circles.forEach((circleItem, index) => {
-        const xPosition = config.timeline.position.x - diameter / 2 + circleVerticalSpace * index;
         const xPositionForCircle = config.timeline.position.x + diameter / 2 + circleVerticalSpace * index;
         
         const yPositionForCircle = position.y + circleVerticalSpace;
@@ -36,7 +35,9 @@ timeline.drawTimeline = ({ position, circleProps, circles }) => {
         p.text(circleItem.website, xPositionForCircle, position.y + 20);
 
         // Draw line leading out of the circle
-        p.line(xPositionForCircle, position.y + 30, xPositionForCircle, position.y + 60);
+        app.p.stroke(26, 115, 232);
+        p.line(xPositionForCircle, yPositionForCircle - diameter / 2, xPositionForCircle, position.y + 37);
+        app.p.stroke(0);
     });
 }
 
@@ -46,21 +47,30 @@ timeline.drawTimelineLine = () => {
     const circleVerticalSpace = verticalSpacing + diameter;
     const yPositonForLine = position.y + circleVerticalSpace;
 
+    app.p.stroke(26, 115, 232);
     app.p.line(0, yPositonForLine, circleVerticalSpace * (config.timeline.circles.length + 1), yPositonForLine );
+    app.p.stroke(0);
 }
 
-timeline.drawCircle = (index) => {
+timeline.drawCircle = (index, completed=false) => {
     const position = app.timeline.circlePositions[index];
     const { diameter } = config.timeline.circleProps;
 
     app.p.circle(position.x, position.y, diameter);
+    if(completed){
+        const user = config.timeline.user;
+        app.p.image(app.p.completedCheckMark, position.x - user.width / 2, position.y - user.height / 2, user.width, user.height);
+    }
+
 }
 
 timeline.drawSmallCircles = (index) => {
     const position = app.timeline.circlePositions[index];
     const { diameter } = config.timeline.circleProps;
     const smallCircleDiameter = diameter / 5;
-
+    if(!app.timeline.smallCirclePositions[index]){
+        app.timeline.smallCirclePositions[index] = []
+    }
     const distanceFromEdge = 6;
 
     const numSmallCircles = Math.floor(Math.random() * 3) + 1;
@@ -91,7 +101,7 @@ timeline.drawSmallCircles = (index) => {
 
         p.push();
         p.fill(randomColor);
-
+        app.timeline.smallCirclePositions[index].push([randomX, randomY, randomColor])
         p.circle(randomX, randomY, smallCircleDiameter);
         p.pop();
     }
@@ -99,6 +109,9 @@ timeline.drawSmallCircles = (index) => {
 
 timeline.renderUserIcon = () => {
     const circlePosition = app.timeline.circlePositions[app.timeline.currentIndex];
+    const { diameter } = config.timeline.circleProps;
+    const smallCircleDiameter = diameter / 5;
+    const lastIndex = app.timeline.currentIndex - 1;
 
     if (circlePosition === undefined) {
         return;
@@ -107,7 +120,16 @@ timeline.renderUserIcon = () => {
     const user = config.timeline.user;
 
     if (app.timeline.currentIndex > 0) {
-        timeline.drawCircle(app.timeline.currentIndex - 1);
+        app.p.stroke(26, 115, 232);
+        timeline.drawCircle(lastIndex, true);
+        app.p.stroke(0);
+
+        app.timeline.smallCirclePositions[lastIndex]?.forEach((circleData)=>{
+            app.p.push();
+            app.p.fill(circleData[2]);
+            app.p.circle(circleData[0], circleData[1], smallCircleDiameter);
+            app.p.pop();
+        })
     }
 
     app.p.image(app.p.userIcon, circlePosition.x - user.width / 2, circlePosition.y - user.height / 2, user.width, user.height);

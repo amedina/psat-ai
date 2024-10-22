@@ -8,137 +8,144 @@ import config from '../config.js';
 const flow = {};
 
 flow.createBox = (title, x, y, width, height) => {
-    app.p.textAlign(app.p.CENTER, app.p.CENTER);
-    app.p.rect(x, y, width, height);
-    app.p.text(title, x + width / 2, y + height / 2);
-}
+  app.p.textAlign(app.p.CENTER, app.p.CENTER);
+  app.p.rect(x, y, width, height);
+  app.p.text(title, x + width / 2, y + height / 2);
+};
 
 flow.progressLine = (x1, y1, x2, y2, direction = 'right', text = '') => {
-    const arrowSize = 10;
-    const width = config.flow.lineWidth - arrowSize;
-    const height = config.flow.lineHeight - arrowSize;
-    const incrementBy = 1;
-    const p = app.p;
+  const arrowSize = 10;
+  const width = config.flow.lineWidth - arrowSize;
+  const height = config.flow.lineHeight - arrowSize;
+  const incrementBy = 1;
+  const p = app.p;
 
-    let _x2 = x1; // For horizontal directions
-    let _y2 = y1; // For vertical direction
-    let __x2 = x2;
+  let _x2 = x1; // For horizontal directions
+  let _y2 = y1; // For vertical direction
+  let __x2 = x2;
 
-    return new Promise((resolve) => {
-        app.flow.intervals['progressline'] = setInterval(() => {
-            // Check the direction and adjust the respective coordinate
-            if (direction === 'right') {
-                _x2 = _x2 + incrementBy;
+  return new Promise((resolve) => {
+    app.flow.intervals['progressline'] = setInterval(() => {
+      // Check the direction and adjust the respective coordinate
+      if (direction === 'right') {
+        _x2 = _x2 + incrementBy;
 
-                // Check if the line has reached the target length for horizontal direction
-                if ((_x2 - x1) > width) {
-                    clearInterval(app.flow.intervals['progressline']);
-                    resolve(); // Resolve the promise once the interval is cleared
-                }
+        // Check if the line has reached the target length for horizontal direction
+        if (_x2 - x1 > width) {
+          clearInterval(app.flow.intervals['progressline']);
+          resolve(); // Resolve the promise once the interval is cleared
+        }
 
-                // Draw the progressing line horizontally
-                p.line(x1, y1, _x2, y2);
+        // Draw the progressing line horizontally
+        p.line(x1, y1, _x2, y2);
 
-                // Draw the arrow in the correct direction
-                utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
+        // Draw the arrow in the correct direction
+        utils.drawArrow(arrowSize, _x2, y1, direction); // Draw new arrow
+      } else if (direction === 'left') {
+        __x2 = __x2 - incrementBy;
+        const margin = 10;
 
-            } else if (direction === 'left') {
-                __x2 = __x2 - incrementBy;
-                const margin = 10;
+        if (x2 - __x2 > width) {
+          clearInterval(app.flow.intervals['progressline']);
 
-                if ((x2 - __x2) > width) {
-                    clearInterval(app.flow.intervals['progressline']);
+          if (text) {
+            p.textSize(config.canvas.fontSize - 2);
+            p.text(text, __x2 + width / 2, y1 + height / 2);
+            p.textSize(config.canvas.fontSize); // Reset.
+          }
 
-                    if (text) {
-                        p.textSize(config.canvas.fontSize - 2);
-                        p.text(text, __x2 + width / 2, y1 + height / 2);
-                        p.textSize(config.canvas.fontSize); // Reset.
-                    }
+          resolve(); // Resolve the promise once the interval is cleared
+        }
 
-                    resolve(); // Resolve the promise once the interval is cleared
-                }
+        // Draw the progressing line horizontally (left direction)
+        p.line(x2, y2 + margin, __x2, y1 + margin);
 
-                // Draw the progressing line horizontally (left direction)
-                p.line(x2, y2 + margin, __x2, y1 + margin);
+        // Draw the arrow in the correct direction
+        utils.drawArrow(arrowSize, __x2, y1 + 4, direction); // Draw new arrow
+      } else if (direction === 'down') {
+        _y2 = _y2 + incrementBy;
 
-                // Draw the arrow in the correct direction
-                utils.drawArrow(arrowSize, __x2, y1 + 4, direction); // Draw new arrow
+        // Check if the line has reached the target length for vertical direction
+        if (_y2 - y1 > height) {
+          clearInterval(app.flow.intervals['progressline']);
 
-            } else if (direction === 'down') {
-                _y2 = _y2 + incrementBy;
+          if (text) {
+            p.textSize(config.canvas.fontSize - 2);
+            p.text(
+              text,
+              x1 - (text.startsWith('$') ? 10 : width / 2),
+              y1 + height / 2
+            );
+            p.textSize(config.canvas.fontSize); // Reset.
+          }
+          resolve(); // Resolve the promise once the interval is cleared
+        }
 
-                // Check if the line has reached the target length for vertical direction
-                if ((_y2 - y1) > height) {
-                    clearInterval(app.flow.intervals['progressline']);
-                    resolve(); // Resolve the promise once the interval is cleared
-                }
+        // Draw the progressing line vertically
+        p.line(x1, y1, x2, _y2);
 
-                if (text) {
-                    p.textSize(config.canvas.fontSize - 2);
-                    p.text(text, x1 - (text.startsWith('$') ? 10 : width/2), y1 + height / 2);
-                    p.textSize(config.canvas.fontSize); // Reset.
-                }
+        // Draw the arrow in the correct direction
+        utils.drawArrow(arrowSize, x1, _y2, direction); // Draw new arrow
+      } else if (direction === 'up') {
+        _y2 = _y2 - incrementBy;
+        // Check if the line has reached the target length for vertical direction
+        if (y1 - _y2 > height) {
+          clearInterval(app.flow.intervals['progressline']);
 
-                // Draw the progressing line vertically
-                p.line(x1, y1, x2, _y2);
+          if (text) {
+            p.textSize(config.canvas.fontSize - 2);
+            p.text(
+              text,
+              x1 + (text.startsWith('$') ? 10 : width / 2),
+              y1 - height / 2
+            );
+            p.textSize(config.canvas.fontSize); // Reset.
+          }
 
-                // Draw the arrow in the correct direction
-                utils.drawArrow(arrowSize, x1, _y2, direction); // Draw new arrow
-            }else if (direction === 'up') {
-                _y2 = _y2 - incrementBy;
-                // Check if the line has reached the target length for vertical direction
-                if ((y1 - _y2) > height) {
-                    clearInterval(app.flow.intervals['progressline']);
-                    resolve(); // Resolve the promise once the interval is cleared
-                }
+          resolve(); // Resolve the promise once the interval is cleared
+        }
 
-                if (text) {
-                    p.textSize(config.canvas.fontSize - 2);
-                    p.text(text, x1 + (text.startsWith('$') ? 10 : width/2), y1 - height / 2);
-                    p.textSize(config.canvas.fontSize); // Reset.
-                }
+        // Draw the progressing line vertically
+        p.line(x1, y1, x2, _y2);
 
-                // Draw the progressing line vertically
-                p.line(x1, y1, x2, _y2);
-
-                // Draw the arrow in the correct direction
-                utils.drawArrow(arrowSize, x1, _y2, direction); // Draw new arrow
-            }
-        }, 10);
-    });
-}
+        // Draw the arrow in the correct direction
+        utils.drawArrow(arrowSize, x1, _y2, direction); // Draw new arrow
+      }
+    }, 10);
+  });
+};
 
 flow.calculateXYPostions = (index) => {
-    const { position, circleProps } = config.timeline;
-    const { diameter, verticalSpacing } = circleProps;
-    const { lineWidth } = config.flow;
+  const { position, circleProps } = config.timeline;
+  const { diameter, verticalSpacing } = circleProps;
+  const { lineWidth } = config.flow;
 
-    // Calculate (x, y) coordinates
-    const spaceFromTimeline = lineWidth + diameter / 2;
-    const circleVerticalSpace = verticalSpacing + diameter;
+  // Calculate (x, y) coordinates
+  const spaceFromTimeline = lineWidth + diameter / 2;
+  const circleVerticalSpace = verticalSpacing + diameter;
 
-    const y = position.y + spaceFromTimeline + circleVerticalSpace;
-    const x = position.x + diameter / 2 + circleVerticalSpace * index;
+  const y = position.y + spaceFromTimeline + circleVerticalSpace;
+  const x = position.x + diameter / 2 + circleVerticalSpace * index;
 
-    return { x, y };
-}
+  return { x, y };
+};
 
 flow.createOverrideBox = (x1, y1, x2, height) => {
-    const p = app.p;
-    const paddingLeft = 1;
+  const p = app.p;
+  const paddingLeft = 1;
 
-    // Calculate the width of the box
-    let width = x2 - x1;
-    
-    // Calculate the top y-position for the rectangle
-    let topY = y1 + height / 2;
+  // Calculate the width of the box
+  let width = x2 - x1;
 
-    // Draw the rectangle
-    p.push();
-    p.noStroke(); // Remove the border
-    p.fill(config.canvas.background); // Set the fill color from the config
-    p.rect(x1 + paddingLeft, topY, width, height); // Draw the rectangle
-    p.pop();
-}
+  // Calculate the top y-position for the rectangle
+  let topY = y1 + height / 2;
+
+  // Draw the rectangle
+  p.push();
+  p.noStroke(); // Remove the border
+  p.fill(config.canvas.background); // Set the fill color from the config
+  p.rect(x1 + paddingLeft, topY, width, height); // Draw the rectangle
+  p.pop();
+};
 
 export default flow;

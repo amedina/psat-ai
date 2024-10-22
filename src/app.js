@@ -2,6 +2,7 @@ const app = {
   timeline: {
     isPaused: false,
     circlePositions: [],
+    smallCirclePositions:[],
     circlePublisherIndices: [],
     currentIndex: 0,
   },
@@ -21,6 +22,7 @@ const app = {
   },
   canDrawAuctionFlow: true,
   p: null,
+  ip: null,
 }
 
 export default app;

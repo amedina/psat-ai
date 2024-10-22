@@ -32,6 +32,14 @@ const config = {
       mediumBox: { width: 125, height: 50 },
       lineWidth: 100,
       lineHeight: 50,
+    },
+    ripple: {
+      ripples: [],
+      numRipples: 3,
+      maxRadius: 200,
+      time: 4000,
+      speed: 1,
+      rippled: false,
     }
   };
 

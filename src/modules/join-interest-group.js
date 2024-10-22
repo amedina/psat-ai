@@ -5,7 +5,6 @@ import flow from './flow';
 import app from '../app';
 import config from '../config';
 import utils from './utils';
-import rippleEffect from './ripple-effect';
 import timeline from './timeline';
 
 const joinInterestGroup = {};
@@ -55,7 +54,6 @@ joinInterestGroup.setUp = (index) => {
             y2: y,
             speed: 0.6,
             direction: 'up',
-            text: 'joinInterestGroup()'
         }
     });
 
@@ -83,7 +81,6 @@ joinInterestGroup.setUp = (index) => {
                 y2: y + box.height/2 + lineHeight,
                 speed: 0.05,
                 direction: 'down',
-                text: ''
             }
         });
 
